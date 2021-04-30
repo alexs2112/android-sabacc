@@ -13,17 +13,28 @@ public class Player {
     // Handling credits
     private int credits;
     public int credits() { return credits; }
-    public void modifyCredits(int x) { credits -= x; }
+    public void modifyCredits(int x) { credits += x; }
 
     // Handling the hand
     private Array<Card> hand;
     public Array<Card> hand() { return hand; }
     public int numCards() { return hand.size; }
 
-    // For now, cap the player at 5 card maximum
+    // The current score
+    private int score;
+    public int score() { return score; }
+    public void refreshScore() { score = 0; }
+
+    /**
+     * A function to simply add a card to the players hand
+     * Will not add if the player has 5 cards, due to screen size restraints
+     * Fix this later
+     */
     public void addCard(Card c) {
-        if (numCards() < 5)
+        if (numCards() < 5) {
+            score += c.value;
             hand.add(c);
+        }
     }
 
     // Some variables for each game round
@@ -39,13 +50,26 @@ public class Player {
     }
 
     /**
-     * Calculate the score by totalling up the cards in the players hand
-     * @return the value of the players hand
+     * Determine if the player currently has the idiots array, consisting of
+     * the Idiot (0), 2, 3
+     * @return true if an idiot's array is held
      */
-    public int calculateScore() {
-        int s = 0;
-        for (Card c : hand)
-            s += c.value;
-        return s;
+    public boolean idiotsArray() {
+        if (numCards() != 3)
+            return false;
+        boolean zero = false;
+        boolean two = false;
+        boolean three = false;
+        for (Card c : hand) {
+            if (c.value == 0)
+                zero = true;
+            else if (c.value == 2)
+                two = true;
+            else if (c.value == 3)
+                three = true;
+            else
+                return false;
+        }
+        return zero && two && three;
     }
 }

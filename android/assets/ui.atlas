@@ -6,36 +6,43 @@ filter: Nearest, Nearest
 repeat: none
 button2-down
   rotate: false
-  xy: 604, 2
+  xy: 604, 100
   size: 300, 128
   orig: 300, 128
   offset: 0, 0
   index: -1
 button2-up
   rotate: false
-  xy: 906, 2
+  xy: 906, 100
   size: 300, 128
   orig: 300, 128
   offset: 0, 0
   index: -1
 button3-down
   rotate: false
-  xy: 1208, 2
+  xy: 1208, 100
   size: 200, 128
   orig: 200, 128
   offset: 0, 0
   index: -1
 button3-up
   rotate: false
-  xy: 1410, 2
+  xy: 1410, 100
   size: 200, 128
   orig: 200, 128
   offset: 0, 0
   index: -1
 no-button
   rotate: false
-  xy: 2, 2
+  xy: 2, 100
   size: 600, 128
   orig: 600, 128
+  offset: 0, 0
+  index: -1
+player-box
+  rotate: false
+  xy: 2, 2
+  size: 600, 96
+  orig: 600, 96
   offset: 0, 0
   index: -1
