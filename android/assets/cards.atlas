@@ -1,0 +1,522 @@
+
+cards.png
+size: 2048, 2048
+format: RGBA8888
+filter: Nearest, Nearest
+repeat: none
+coins10
+  rotate: false
+  xy: 0, 1305
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+coins3
+  rotate: false
+  xy: 640, 870
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+coins5
+  rotate: false
+  xy: 1600, 870
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+coins8
+  rotate: false
+  xy: 960, 870
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+coinscmdr
+  rotate: false
+  xy: 320, 1305
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+coinsmstrss
+  rotate: false
+  xy: 1280, 435
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+evilone
+  rotate: false
+  xy: 960, 435
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+flasks1
+  rotate: false
+  xy: 1280, 0
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+flasks11
+  rotate: false
+  xy: 1600, 435
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+flasks4
+  rotate: false
+  xy: 1280, 1305
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+flasks7
+  rotate: false
+  xy: 320, 870
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+flasks8 (Phone)
+  rotate: false
+  xy: 1600, 1305
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+flasks8
+  rotate: false
+  xy: 1600, 1305
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+flasks9 (Phone)
+  rotate: false
+  xy: 0, 870
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+flasks9
+  rotate: false
+  xy: 0, 870
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+flasksmstr
+  rotate: false
+  xy: 0, 435
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+queen
+  rotate: false
+  xy: 320, 435
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+sabers1
+  rotate: false
+  xy: 640, 1305
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+sabers10
+  rotate: false
+  xy: 960, 1305
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+sabers3
+  rotate: false
+  xy: 1280, 870
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+sabers6
+  rotate: false
+  xy: 320, 0
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+sabers8
+  rotate: false
+  xy: 1600, 0
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+selected
+  rotate: false
+  xy: 1920, 1566
+  size: 128, 174
+  orig: 128, 174
+  offset: 0, 0
+  index: -1
+staves3
+  rotate: false
+  xy: 640, 435
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+staves8
+  rotate: false
+  xy: 640, 0
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+stavesace
+  rotate: false
+  xy: 0, 0
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+stavesmstr
+  rotate: false
+  xy: 960, 0
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+
+cards2.png
+size: 2048, 2048
+format: RGBA8888
+filter: Nearest, Nearest
+repeat: none
+balance
+  rotate: false
+  xy: 1280, 435
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+cardback
+  rotate: false
+  xy: 0, 870
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+coins11
+  rotate: false
+  xy: 640, 0
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+coins2
+  rotate: false
+  xy: 640, 1305
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+coins4
+  rotate: false
+  xy: 1280, 0
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+coins7
+  rotate: false
+  xy: 960, 1305
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+coinsmstr
+  rotate: false
+  xy: 1600, 1305
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+demise
+  rotate: false
+  xy: 320, 870
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+flasks10
+  rotate: false
+  xy: 1600, 0
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+flasks3
+  rotate: false
+  xy: 320, 0
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+flasks6
+  rotate: false
+  xy: 0, 435
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+flasksace
+  rotate: false
+  xy: 640, 435
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+flaskscmdr
+  rotate: false
+  xy: 320, 1305
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+idiot
+  rotate: false
+  xy: 1600, 870
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+sabers2
+  rotate: false
+  xy: 1280, 870
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+sabers5
+  rotate: false
+  xy: 320, 435
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+sabersace
+  rotate: false
+  xy: 1600, 435
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+sabersmstr
+  rotate: false
+  xy: 1280, 1305
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+star
+  rotate: false
+  xy: 960, 0
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+staves11
+  rotate: false
+  xy: 640, 870
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+staves2
+  rotate: false
+  xy: 0, 0
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+staves5
+  rotate: false
+  xy: 0, 1305
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+staves7
+  rotate: false
+  xy: 960, 870
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+stavescmdr
+  rotate: false
+  xy: 960, 435
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+
+cards3.png
+size: 2048, 2048
+format: RGBA8888
+filter: Nearest, Nearest
+repeat: none
+coins1
+  rotate: false
+  xy: 960, 1305
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+coins6
+  rotate: false
+  xy: 1280, 870
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+coins9
+  rotate: false
+  xy: 0, 435
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+coinsace
+  rotate: false
+  xy: 0, 0
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+endurance
+  rotate: false
+  xy: 960, 435
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+flasks2
+  rotate: false
+  xy: 1600, 1305
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+flasks5
+  rotate: false
+  xy: 320, 870
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+flasksmstrss
+  rotate: false
+  xy: 640, 1305
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+moderation
+  rotate: false
+  xy: 320, 435
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+sabers11
+  rotate: false
+  xy: 0, 1305
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+sabers4
+  rotate: false
+  xy: 960, 870
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+sabers7
+  rotate: false
+  xy: 0, 870
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+sabers9
+  rotate: false
+  xy: 1280, 435
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+saberscmdr
+  rotate: false
+  xy: 960, 0
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+sabersmstrss
+  rotate: false
+  xy: 1280, 1305
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+staves1
+  rotate: false
+  xy: 640, 435
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+staves10
+  rotate: false
+  xy: 640, 0
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+staves4
+  rotate: false
+  xy: 320, 1305
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+staves6
+  rotate: false
+  xy: 1600, 870
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+staves9
+  rotate: false
+  xy: 640, 870
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
+stavesmstrss
+  rotate: false
+  xy: 320, 0
+  size: 320, 435
+  orig: 320, 435
+  offset: 0, 0
+  index: -1
