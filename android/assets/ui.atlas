@@ -60,3 +60,17 @@ player-box
   orig: 600, 96
   offset: 0, 0
   index: -1
+small-button3-down
+  rotate: false
+  xy: 1600, 160
+  size: 200, 96
+  orig: 200, 96
+  offset: 0, 0
+  index: -1
+small-button3-up
+  rotate: false
+  xy: 1400, 32
+  size: 200, 96
+  orig: 200, 96
+  offset: 0, 0
+  index: -1

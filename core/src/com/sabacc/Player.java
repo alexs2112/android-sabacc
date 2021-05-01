@@ -73,4 +73,34 @@ public class Player {
         }
         return zero && two && three;
     }
+
+    /**
+     * A method that determines how much this player wants to bet, raise, or if they fold
+     * @param mainPot the current value of the main pot
+     * @param bid the current bid of the hand
+     * @param players the array of players in the game
+     * @return -1 if the player folds, an integer of how much they bet otherwise
+     */
+    public int makeBet(int mainPot, int bid, Array<Player> players) {
+        // For now, make it extremely simple, if the hand value is abs(19-22), make a bet
+        // of 10% of the pot value
+        // If the hand value is abs(23), make a bet of 20%
+        // If the hand value is bombed out, then fold
+        // If the player cannot afford to call the bid, fold
+        // If this player has all 5 cards in hand but a value of < 14, fold
+        // Otherwise, call
+        int aScore = Math.abs(score);
+        if (bid - currentBid > credits)
+            return -1;
+        if (aScore > 23)
+            return -1;
+        if (aScore == 23)
+            return Math.max(bid - currentBid + (int)(mainPot * 0.2), credits);
+        if (aScore > 18)
+            return Math.max(bid - currentBid + (int)(mainPot * 0.1), credits);
+        if (numCards() == 5 && aScore < 14)
+            return -1;
+
+        return bid - currentBid;
+    }
 }

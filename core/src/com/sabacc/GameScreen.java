@@ -1,7 +1,9 @@
 package com.sabacc;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.math.Vector3;
@@ -9,6 +11,8 @@ import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.scenes.scene2d.ui.TextField;
+import com.badlogic.gdx.scenes.scene2d.ui.TextField.TextFieldFilter;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.utils.Array;
@@ -72,11 +76,12 @@ public class GameScreen implements Screen {
     private Card selected;
 
     // Keep track of the current stage, either for the betting round or the drawing round
-    private Stage currentStage;
-    private Stage bettingStage;
+    private Stage currentStage;     // The current stage to be drawn
+    private Stage bettingStage;     // Bet (match the current bet), Raise (raise the bet), Fold (drop out of the round)
     private Stage drawingStage;     // Without the option to call
     private Stage drawingStage2;    // With the option to call
     private Stage nextRoundStage;   // In between rounds, to see final hands
+    private Stage setBetStage;      // Allows the player to set their current bet
     final private FitViewport viewport;
 
     // The skin for different buttons
@@ -92,6 +97,7 @@ public class GameScreen implements Screen {
         camera.setToOrtho(false, game.width, game.height);
         this.ante = ante;
         messages = new Queue<String>();
+        betweenRounds = true;
 
         // Load the skin for the ui and the viewport for the different button stages
         uiSkin = new Skin();
@@ -111,6 +117,7 @@ public class GameScreen implements Screen {
         initializeDrawingButtons();
         initializeDrawingButtonsWithCall();
         initializeNextRoundButton();
+        initializeSettingBet();
 
         swapStage(nextRoundStage);
     }
@@ -129,9 +136,6 @@ public class GameScreen implements Screen {
         camera.update();
         game.batch.setProjectionMatrix(camera.combined);
 
-        // Show the current stage
-        currentStage.draw();
-
         game.batch.begin();
 
         // Draw the players hand
@@ -144,6 +148,9 @@ public class GameScreen implements Screen {
         // Write how many credits the player currently has
         game.font24.draw(game.batch, "Credits: " + player.credits(), 16, game.height - 48);
 
+        // Write what the current bid is
+        game.font24.draw(game.batch, "Bid: " + currentBid, 300, game.height - 48);
+
         // Write all game messages at the top of the screen
         for (int i = 0; i < messages.size; i++)
             game.msgFont.draw(game.batch, messages.get(i), 16, game.height - 80 - i*20);
@@ -152,6 +159,9 @@ public class GameScreen implements Screen {
         drawPlayerBoxes(game.height - 100 - game.maxMessages*20 - 96);
 
         game.batch.end();
+
+        // Show the current stage below the other drawings
+        currentStage.draw();
 
         // Take player input to determine if they selected a card in their hand
         if (Gdx.input.justTouched()) {
@@ -204,15 +214,18 @@ public class GameScreen implements Screen {
             game.font24.draw(game.batch, "C: " + p.credits(), 12, y);
             y -= 24;
 
+            if (betweenRounds)
+                game.font24.draw(game.batch, "H: " + p.score(), 12, y);
+            else
+                game.font24.draw(game.batch, "H: ?", 12, y);
+
             for (int c = 0; c < p.numCards(); c++) {
                 // If game is not over, draw the card back
                 if (!betweenRounds)
                     deck.cardback().draw(game.batch, 530 - (c*70), sy - 96*(i-1), 70, 96);
                 // Otherwise, draw the card face and the value of that player's hand under C
-                else {
+                else
                     p.hand().get(c).image.draw(game.batch, 530 - (c*70), sy - 96*(i-1), 70, 96);
-                    game.font24.draw(game.batch, "H: " + p.score(), 12, y);
-                }
             }
         }
     }
@@ -292,9 +305,15 @@ public class GameScreen implements Screen {
     private void newBettingRound() {
         System.out.println("New Betting Round!");
         swapStage(bettingStage); // Set the stage to the betting stage
-        currentBid = 5;         // For now set it to 5 every time so we can easily know when betting is done
-        for (Player p : players)
+
+        // Reset the current bid of the round
+        currentBid = 0;
+
+        // Set each player to have not bet
+        for (Player p : players) {
             p.currentBid = 0;
+            p.hasBet = false;
+        }
 
         // After the bid has been set, run a betting round
         runBettingRound();
@@ -309,7 +328,7 @@ public class GameScreen implements Screen {
         System.out.println("Current Player = " + p.name());
 
         // If the current player has already called the bid, then the betting round is over
-        if (p.currentBid == currentBid) {
+        if (p.currentBid == currentBid && p.hasBet) {
 
             // If all players (or all players except one) have folded, end the round
             if (allFolded()) {
@@ -331,11 +350,31 @@ public class GameScreen implements Screen {
 
             // At the end of the betting round is the drawing round
             newDrawingRound();
+            return;
         }
 
+        // Toggle this player to have bet (or called the initial bet of 0)
+        p.hasBet = true;
+
         // For all AI, for now just have them match the bid
-        else if (!p.isPlayer) {
-            matchCurrentBid(p);
+        if (!p.isPlayer) {
+            int v = p.makeBet(mainPot, currentBid, players);
+            if (v == -1) {
+                p.folded = true;
+                nextPlayer();
+                addMessage(p.name() + " has folded!");
+            } else {
+                //addMessage(p.name() + " bets " + v + " credits");
+                if (v > currentBid)
+                    addMessage(p.name() + " raises to " + v + " credits");
+                if (v == currentBid)
+                    addMessage(p.name() + " calls the bid of " + v + " credits");
+                else
+                    addMessage("ERROR: " + p.name() + " bets " + v + " credits");
+                p.modifyCredits(-v);
+                p.currentBid += v;
+                mainPot += v;
+            }
             nextPlayer();
             runBettingRound();
         }
@@ -358,6 +397,32 @@ public class GameScreen implements Screen {
         p.currentBid += v;
         mainPot += v;
         addMessage(p.name() + " matches the current bid of " + currentBid + " credits");
+    }
+
+    /**
+     * Raise the current bid to a new value denoted by value, and then bet enough to bring
+     * player.currentBid to the new currentBid
+     * @param value the string representation of the new bid, it is always an integer
+     */
+    private void playerRaise(String value) {
+        int newbid = Integer.parseInt(value);
+
+        int v = newbid - player.currentBid;
+        if (newbid < currentBid) {
+            addMessage("Error: You cannot raise to lesser value");
+            return;
+        } else if (v > player.credits()) {
+            addMessage("Error: You cannot raise to more credits than you have");
+            return;
+        }
+        currentBid = newbid;
+        player.modifyCredits(-v);
+        player.currentBid += v;
+        mainPot += v;
+        addMessage(player.name() + " raises the current bid to " + currentBid);
+        swapStage(bettingStage);
+        nextPlayer();
+        runBettingRound();
     }
 
     /**
@@ -473,26 +538,25 @@ public class GameScreen implements Screen {
             return;
         }
         if (currentScore == 23 || winner.idiotsArray()) {
-            addMessage(winner.name() + " won with a pure sabacc!");
+            addMessage(winner.name() + " won " + (mainPot + sabaccPot) + " credits with a pure sabacc!");
             winner.modifyCredits(mainPot + sabaccPot);
             mainPot = 0;
             sabaccPot = 0;
         } else {
-            addMessage(winner.name() + " won with a hand of " + currentScore + "!");
+            addMessage(winner.name() + " won " + mainPot + " credits with a hand of " + currentScore + "!");
             winner.modifyCredits(mainPot);
             mainPot = 0;
         }
 
         // After allocating credits, ask the player to start the next round
-        //startNewRound();
         swapStage(nextRoundStage);
     }
 
     /**
      * Set up the three buttons for the betting round
      * They are:
-     *  - Set (call the current bid)
-     *  - Bet (raise the current bid)
+     *  - Bet (call the current bid)
+     *  - Raise (raise the current bid)
      *  - Fold (drop out of the round)
      */
     private void initializeBettingButtons() {
@@ -504,12 +568,12 @@ public class GameScreen implements Screen {
         buttonStyle.up = uiSkin.getDrawable("button3-up");
         buttonStyle.down = uiSkin.getDrawable("button3-down");
 
-        // SET
-        TextButton setButton = new TextButton("Set", buttonStyle);
-        setButton.setWidth(200);
-        setButton.setHeight(128);
-        setButton.setPosition(0,0);
-        setButton.addListener(new ClickListener() {
+        // BET
+        TextButton betButton = new TextButton("Bet", buttonStyle);
+        betButton.setWidth(200);
+        betButton.setHeight(128);
+        betButton.setPosition(0,0);
+        betButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent e, float x, float y) {
                 Player p = players.get(currentPlayer);
@@ -521,15 +585,15 @@ public class GameScreen implements Screen {
             }
         });
 
-        // BET
-        TextButton betButton = new TextButton("Bet", buttonStyle);
-        betButton.setWidth(200);
-        betButton.setHeight(128);
-        betButton.setPosition(200,0);
-        betButton.addListener(new ClickListener() {
+        // Raise
+        TextButton raiseButton = new TextButton("Raise", buttonStyle);
+        raiseButton.setWidth(200);
+        raiseButton.setHeight(128);
+        raiseButton.setPosition(200,0);
+        raiseButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent e, float x, float y) {
-                // for now just dont let the player bet
+                swapStage(setBetStage);
             }
         });
 
@@ -550,8 +614,8 @@ public class GameScreen implements Screen {
             }
         });
 
-        bettingStage.addActor(setButton);
         bettingStage.addActor(betButton);
+        bettingStage.addActor(raiseButton);
         bettingStage.addActor(foldButton);
     }
 
@@ -721,6 +785,67 @@ public class GameScreen implements Screen {
         nextRoundStage.addActor(startButton);
     }
 
+    /**
+     * Initialize the bet setting stage
+     */
+    private void initializeSettingBet() {
+        setBetStage = new Stage(viewport);
+
+        // The start of where the text field and buttons will be drawn
+        int y = game.height / 2 + 100;
+
+        TextField.TextFieldStyle style = new TextField.TextFieldStyle();
+        style.font = game.font24;
+        style.background = uiSkin.getDrawable("button1-up");
+        style.fontColor = Color.WHITE;
+        final TextField field = new TextField("", style);
+        field.setPosition(0, y);
+        field.setSize(600,96);
+        field.setTextFieldFilter(new TextFieldFilter.DigitsOnlyFilter());
+        field.setTextFieldListener(new TextField.TextFieldListener() {
+            @Override
+            public void keyTyped(TextField textField, char c) {
+                System.out.print(field.getText());
+                if (c == '\n')
+                    playerRaise(field.getText());
+            }
+        });
+        setBetStage.addActor(field);
+
+        y -= 96;
+
+        TextButton.TextButtonStyle buttonStyle = new TextButton.TextButtonStyle();
+        buttonStyle.font = game.font32;
+        buttonStyle.up = uiSkin.getDrawable("small-button3-up");
+        buttonStyle.down = uiSkin.getDrawable("small-button3-down");
+
+        // Accept
+        TextButton acceptButton = new TextButton("Accept", buttonStyle);
+        acceptButton.setWidth(200);
+        acceptButton.setHeight(96);
+        acceptButton.setPosition(0,y);
+        acceptButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent e, float x, float y) {
+                playerRaise(field.getText());
+            }
+        });
+        setBetStage.addActor(acceptButton);
+
+        // Cancel
+        TextButton cancelButton = new TextButton("Cancel", buttonStyle);
+        cancelButton.setWidth(200);
+        cancelButton.setHeight(96);
+        cancelButton.setPosition(400,y);
+        cancelButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent e, float x, float y) {
+                swapStage(bettingStage);
+            }
+        });
+        setBetStage.addActor(cancelButton);
+    }
+
     @Override
     public void resize(int width, int height) {
 
@@ -748,6 +873,7 @@ public class GameScreen implements Screen {
         drawingStage.dispose();
         drawingStage2.dispose();
         nextRoundStage.dispose();
+        setBetStage.dispose();
         uiSkin.dispose();
     }
 }
