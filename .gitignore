@@ -113,3 +113,8 @@ Thumbs.db
 /ios/xcode/native/
 /ios/IOSLauncher.app
 /ios/IOSLauncher.app.dSYM
+
+## Current stuff that isnt implemented
+html/
+desktop/
+ios/
