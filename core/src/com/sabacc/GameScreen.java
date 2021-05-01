@@ -18,11 +18,11 @@ import com.badlogic.gdx.utils.viewport.FitViewport;
 
 public class GameScreen implements Screen {
     final Sabacc game;
-    private OrthographicCamera camera;
+    final private OrthographicCamera camera;
 
     // An array of players in the game, with a reference to the main player
-    private Array<Player> players;
-    private Player player;
+    final private Array<Player> players;
+    final private Player player;
 
     // The index of the current player and a small helper function to increment it to
     // the next active player
@@ -34,10 +34,10 @@ public class GameScreen implements Screen {
     }
 
     // The game deck
-    private Deck deck;
+    final private Deck deck;
 
     // The array of past messages
-    private Queue<String> messages;
+    final private Queue<String> messages;
     private void addMessage(String message) {
         System.out.println(message);
         messages.addLast(message);
@@ -46,7 +46,7 @@ public class GameScreen implements Screen {
     }
 
     // The buy in price for each game
-    private int ante;
+    final private int ante;
 
     // The two pots
     private int mainPot;
@@ -65,6 +65,9 @@ public class GameScreen implements Screen {
     // If the round has been called
     private boolean isCalled;
 
+    // Between rounds, to display opponents hands (if any) and their hand values
+    private boolean betweenRounds;
+
     // The currently selected card, defaults to null
     private Card selected;
 
@@ -73,6 +76,7 @@ public class GameScreen implements Screen {
     private Stage bettingStage;
     private Stage drawingStage;     // Without the option to call
     private Stage drawingStage2;    // With the option to call
+    private Stage nextRoundStage;   // In between rounds, to see final hands
     final private FitViewport viewport;
 
     // The skin for different buttons
@@ -106,9 +110,9 @@ public class GameScreen implements Screen {
         initializeBettingButtons();
         initializeDrawingButtons();
         initializeDrawingButtonsWithCall();
+        initializeNextRoundButton();
 
-        startNewRound();
-        newBettingRound();
+        swapStage(nextRoundStage);
     }
 
     @Override
@@ -198,11 +202,17 @@ public class GameScreen implements Screen {
             game.font24.draw(game.batch, p.name(), 12, y);
             y -= 24;
             game.font24.draw(game.batch, "C: " + p.credits(), 12, y);
+            y -= 24;
 
             for (int c = 0; c < p.numCards(); c++) {
-                // If game is not over
-                deck.cardback().draw(game.batch, 530 - (c*70), sy - 96*(i-1), 70, 96);
-                // Else show the card face up and write the value beneath C
+                // If game is not over, draw the card back
+                if (!betweenRounds)
+                    deck.cardback().draw(game.batch, 530 - (c*70), sy - 96*(i-1), 70, 96);
+                // Otherwise, draw the card face and the value of that player's hand under C
+                else {
+                    p.hand().get(c).image.draw(game.batch, 530 - (c*70), sy - 96*(i-1), 70, 96);
+                    game.font24.draw(game.batch, "H: " + p.score(), 12, y);
+                }
             }
         }
     }
@@ -213,6 +223,10 @@ public class GameScreen implements Screen {
      */
     private void startNewRound() {
         // Start by refreshing the deck and clearing each players hand
+        messages.clear();
+        addMessage("Starting new round!");
+        addMessage("Ante is " + ante);
+        betweenRounds = false;
         deck.refreshDeck();
         for (Player p : players) {
             p.refreshScore();
@@ -222,6 +236,7 @@ public class GameScreen implements Screen {
         for (int i = 0; i < players.size; i++) {
             if (players.get(i).credits() >= ante * 2)
                 continue;
+            addMessage(players.get(i).name() + " drops from the game!");
             players.removeIndex(i);
             i--;
         }
@@ -240,6 +255,9 @@ public class GameScreen implements Screen {
         // Typically 4 pot building rounds before a player can call the hand
         untilCall = 4;
         isCalled = false;
+
+        // Rounds begin with a preliminary betting round
+        newBettingRound();
     }
 
     /**
@@ -420,6 +438,7 @@ public class GameScreen implements Screen {
     private void endRound() {
         // First, find all the players who bombed out, they will be folded and they pay
         // credits equal to the main pot into the sabacc pot
+        betweenRounds = true;
         for (Player p : players) {
             if (!p.folded) {
                 System.out.println(p.name() + " : " + p.score());
@@ -464,8 +483,9 @@ public class GameScreen implements Screen {
             mainPot = 0;
         }
 
-        // After allocating credits, start the next round
-        startNewRound();
+        // After allocating credits, ask the player to start the next round
+        //startNewRound();
+        swapStage(nextRoundStage);
     }
 
     /**
@@ -544,15 +564,15 @@ public class GameScreen implements Screen {
     private void initializeDrawingButtons() {
         drawingStage = new Stage(viewport);
 
-        // Both buttons use the same style
+        // Both active buttons use the same style
         TextButton.TextButtonStyle buttonStyle = new TextButton.TextButtonStyle();
         buttonStyle.font = game.font32;
-        buttonStyle.up = uiSkin.getDrawable("button2-up");
-        buttonStyle.down = uiSkin.getDrawable("button2-down");
+        buttonStyle.up = uiSkin.getDrawable("button3-up");
+        buttonStyle.down = uiSkin.getDrawable("button3-down");
 
         // DRAW
         TextButton drawButton = new TextButton("Draw", buttonStyle);
-        drawButton.setWidth(300);
+        drawButton.setWidth(200);
         drawButton.setHeight(128);
         drawButton.setPosition(0,0);
         drawButton.addListener(new ClickListener() {
@@ -570,9 +590,9 @@ public class GameScreen implements Screen {
 
         // STAND
         TextButton standButton = new TextButton("Stand", buttonStyle);
-        standButton.setWidth(300);
+        standButton.setWidth(200);
         standButton.setHeight(128);
-        standButton.setPosition(300,0);
+        standButton.setPosition(200,0);
         standButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent e, float x, float y) {
@@ -586,8 +606,20 @@ public class GameScreen implements Screen {
             }
         });
 
+        // Both buttons use the same style
+        TextButton.TextButtonStyle redButtonStyle = new TextButton.TextButtonStyle();
+        redButtonStyle.font = game.font32;
+        redButtonStyle.up = uiSkin.getDrawable("button3-unavailable");
+
+        // CALL THAT DOESNT DO ANYTHING HERE
+        TextButton callButton = new TextButton("Call", redButtonStyle);
+        callButton.setWidth(200);
+        callButton.setHeight(128);
+        callButton.setPosition(400,0);
+
         drawingStage.addActor(drawButton);
         drawingStage.addActor(standButton);
+        drawingStage.addActor(callButton);
     }
 
     /**
@@ -664,6 +696,31 @@ public class GameScreen implements Screen {
         drawingStage2.addActor(callButton);
     }
 
+    /**
+     * One large button to start the next round of play
+     */
+    private void initializeNextRoundButton() {
+        nextRoundStage = new Stage(viewport);
+
+        TextButton.TextButtonStyle buttonStyle = new TextButton.TextButtonStyle();
+        buttonStyle.font = game.font32;
+        buttonStyle.up = uiSkin.getDrawable("button1-up");
+        buttonStyle.down = uiSkin.getDrawable("button1-down");
+
+        TextButton startButton = new TextButton("Start Next Round", buttonStyle);
+        startButton.setWidth(600);
+        startButton.setHeight(128);
+        startButton.setPosition(0,0);
+        startButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent e, float x, float y) {
+                startNewRound();
+            }
+        });
+
+        nextRoundStage.addActor(startButton);
+    }
+
     @Override
     public void resize(int width, int height) {
 
@@ -690,6 +747,7 @@ public class GameScreen implements Screen {
         bettingStage.dispose();
         drawingStage.dispose();
         drawingStage2.dispose();
+        nextRoundStage.dispose();
         uiSkin.dispose();
     }
 }

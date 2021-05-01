@@ -4,44 +4,58 @@ size: 2048, 256
 format: RGBA8888
 filter: Nearest, Nearest
 repeat: none
+button1-down
+  rotate: false
+  xy: 0, 0
+  size: 600, 128
+  orig: 600, 128
+  offset: 0, 0
+  index: -1
+button1-up
+  rotate: false
+  xy: 0, 128
+  size: 600, 128
+  orig: 600, 128
+  offset: 0, 0
+  index: -1
 button2-down
   rotate: false
-  xy: 604, 100
+  xy: 600, 32
   size: 300, 128
   orig: 300, 128
   offset: 0, 0
   index: -1
 button2-up
   rotate: false
-  xy: 906, 100
+  xy: 900, 32
   size: 300, 128
   orig: 300, 128
   offset: 0, 0
   index: -1
 button3-down
   rotate: false
-  xy: 1208, 100
+  xy: 1200, 0
+  size: 200, 128
+  orig: 200, 128
+  offset: 0, 0
+  index: -1
+button3-unavailable
+  rotate: false
+  xy: 1200, 128
   size: 200, 128
   orig: 200, 128
   offset: 0, 0
   index: -1
 button3-up
   rotate: false
-  xy: 1410, 100
+  xy: 1400, 128
   size: 200, 128
   orig: 200, 128
   offset: 0, 0
   index: -1
-no-button
-  rotate: false
-  xy: 2, 100
-  size: 600, 128
-  orig: 600, 128
-  offset: 0, 0
-  index: -1
 player-box
   rotate: false
-  xy: 2, 2
+  xy: 600, 160
   size: 600, 96
   orig: 600, 96
   offset: 0, 0

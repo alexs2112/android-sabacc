@@ -106,6 +106,8 @@ public class Deck {
      * Pop a random card from the deck
      */
     public Card drawCard() {
+        if (cards.size == 0)
+            return null;
         int i = (int)(Math.random() * cards.size);
         return cards.removeIndex(i);
     }

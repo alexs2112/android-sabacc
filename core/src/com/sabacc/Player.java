@@ -39,6 +39,7 @@ public class Player {
 
     // Some variables for each game round
     public int currentBid;
+    public boolean hasBet;   // To check if the player has matched the current bet
     public boolean folded;
     public boolean hasDrawn; // Not necessarily drawn a card, has gone in the drawing round
 
