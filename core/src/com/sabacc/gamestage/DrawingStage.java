@@ -9,6 +9,13 @@ import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.sabacc.GameScreen;
 import com.sabacc.Player;
 
+/**
+ * Set up the three buttons for the drawing after a player can call
+ * They are:
+ *  - Draw (draw a card)
+ *  - Stand (don't draw a card)
+ *  - Call (end the round after one final betting round)
+ */
 public class DrawingStage implements GameStage {
     private final GameScreen main;
     private final FitViewport viewport;
@@ -59,7 +66,6 @@ public class DrawingStage implements GameStage {
 
         // Decrement how many rounds until a player can call
         untilCall--;
-        System.out.println("Until Call: " + untilCall);
 
         // Set all players to have not gone yet
         for (Player p : main.players)
@@ -83,10 +89,8 @@ public class DrawingStage implements GameStage {
             if (c == -1) {
                 // Call
                 main.addMessage(p.name() + " calls the round");
-
-                // DO ONE FINAL BETTING ROUND
-
-                // isCalled = true;
+                main.isCalled = true;
+                main.setGameStage(main.bettingStage);
                 return;
             } else if (c == 0) {
                 // Stand
@@ -109,8 +113,7 @@ public class DrawingStage implements GameStage {
      */
     private void tryToEndRound() {
         if (main.getCurrentPlayer().hasDrawn) {
-            // CHANGE TO BETTING ROUND
-            main.setGameStage(main.drawingStage);
+            main.setGameStage(main.bettingStage);
         }
     }
 
@@ -123,6 +126,7 @@ public class DrawingStage implements GameStage {
     public void dispose() {
         buildStage.dispose();
         callStage.dispose();
+        currentStage.dispose();
     }
 
     private void initializeBuildStage(TextButton.TextButtonStyle buttonStyle) {
@@ -142,8 +146,6 @@ public class DrawingStage implements GameStage {
                     drawCard(p);
                     main.nextPlayer();
                     tryToEndRound();
-                } else {
-                    System.out.println("TIMER");
                 }
             }
         });
@@ -165,8 +167,19 @@ public class DrawingStage implements GameStage {
                 }
             }
         });
+
+        // Set up a red call button that doesnt do anything
+        TextButton.TextButtonStyle redButtonStyle = new TextButton.TextButtonStyle();
+        redButtonStyle.font = main.game.font32;
+        redButtonStyle.up = main.uiSkin.getDrawable("button3-unavailable");
+        TextButton callButton = new TextButton("Call", redButtonStyle);
+        callButton.setWidth(200);
+        callButton.setHeight(128);
+        callButton.setPosition(400,0);
+
         buildStage.addActor(drawButton);
         buildStage.addActor(standButton);
+        buildStage.addActor(callButton);
     }
 
     private void initializeCallStage(TextButton.TextButtonStyle buttonStyle) {
@@ -191,6 +204,44 @@ public class DrawingStage implements GameStage {
                 }
             }
         });
+
+        // Stand Button
+        TextButton standButton = new TextButton("Stand", buttonStyle);
+        standButton.setWidth(200);
+        standButton.setHeight(128);
+        standButton.setPosition(200,0);
+        standButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent e, float x, float y) {
+                Player p = main.getCurrentPlayer();
+                if (p.isHuman) {
+                    p.hasDrawn = true;
+                    main.addMessage(p.name() + " stands");
+                    main.nextPlayer();
+                    tryToEndRound();
+                }
+            }
+        });
+
+        // CALL
+        TextButton callButton = new TextButton("Call", buttonStyle);
+        callButton.setWidth(200);
+        callButton.setHeight(128);
+        callButton.setPosition(400,0);
+        callButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent e, float x, float y) {
+                Player p = main.getCurrentPlayer();
+                if (p.isHuman) {
+                    main.addMessage(p.name() + " calls the round");
+                    main.setGameStage(main.bettingStage);
+                    main.isCalled = true;
+                }
+            }
+        });
+
         callStage.addActor(drawButton);
+        callStage.addActor(standButton);
+        callStage.addActor(callButton);
     }
 }

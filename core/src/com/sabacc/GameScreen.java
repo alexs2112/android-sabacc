@@ -47,27 +47,21 @@ public class GameScreen implements Screen {
     final private int ante;
 
     // The two pots
-    private int mainPot;
-    private int sabaccPot;
-
-    // The current bid of the betting round
-    private int currentBid;
+    public int mainPot;
+    public int sabaccPot;
 
     // If this is the start of the round, before the opening hands have been dealt
     // To handle preliminary betting before the opening hands
-    private boolean startOfRound;
-
-    // How many drawing rounds remaining until a player can call
-    private int untilCall;
+    public boolean startOfRound;
 
     // If the round has been called
-    private boolean isCalled;
+    public boolean isCalled;
 
     // Between rounds, to display opponents hands (if any) and their hand values
-    private boolean betweenRounds;
+    public boolean betweenRounds;
 
     // The timer used to add a delay between ai actions
-    private SabaccTimer timer;
+    final private SabaccTimer timer;
 
     // The currently selected card, defaults to null
     private Card selected;
@@ -75,7 +69,9 @@ public class GameScreen implements Screen {
     // Keep track of the current stage, either for the betting round or the drawing round
     final private FitViewport viewport;
 
+    // A set of gamestages that are swapped between
     public DrawingStage drawingStage;
+    public GameStage bettingStage;
     private GameStage currentStage;
     public void setGameStage(GameStage next) {
         currentStage = next;
@@ -112,8 +108,12 @@ public class GameScreen implements Screen {
             players.add(new Player(false, "Opponent " + i, 500));
         }
 
+        // Initialize all game stages
         drawingStage = new DrawingStage(this, viewport);
-        setGameStage(drawingStage);
+        bettingStage = new BettingStage(this, viewport);
+
+        // Then start a new round
+        startNewRound();
     }
 
     @Override
@@ -132,6 +132,9 @@ public class GameScreen implements Screen {
 
         game.batch.begin();
 
+        // Show the current stage
+        currentStage.show();
+
         // Draw the players hand
         displayHand();
 
@@ -142,9 +145,6 @@ public class GameScreen implements Screen {
         // Write how many credits the player currently has
         game.font24.draw(game.batch, "Credits: " + player.credits(), 16, game.height - 48);
 
-        // Write what the current bid is
-        game.font24.draw(game.batch, "Bid: " + currentBid, 300, game.height - 48);
-
         // Write all game messages at the top of the screen
         for (int i = 0; i < messages.size; i++)
             game.msgFont.draw(game.batch, messages.get(i), 16, game.height - 80 - i*20);
@@ -153,10 +153,6 @@ public class GameScreen implements Screen {
         drawPlayerBoxes(game.height - 100 - game.maxMessages*20 - 96);
 
         game.batch.end();
-
-        // Show the current stage below the other drawings
-        //currentStage.draw();
-        currentStage.show();
 
         // Take player input to determine if they selected a card in their hand
         if (Gdx.input.justTouched()) {
@@ -244,7 +240,7 @@ public class GameScreen implements Screen {
      * Unfold each player, check to make sure each player can afford to ante the next round
      * If they cannot, they leave the table
      */
-    private void startNewRound() {
+    public void startNewRound() {
         // Start by refreshing the deck and clearing each players hand
         messages.clear();
         addMessage("Starting new round!");
@@ -276,17 +272,16 @@ public class GameScreen implements Screen {
         startOfRound = true;
 
         // Typically 4 pot building rounds before a player can call the hand
-        untilCall = 4;
         isCalled = false;
 
         // Rounds begin with a preliminary betting round
-        //newBettingRound();
+        setGameStage(bettingStage);
     }
 
     /**
      * Deal the starting hand of 2 cards to each player
      */
-    private void dealStartingHand() {
+    public void dealStartingHand() {
         addMessage("Dealing starting hands!");
         for (int i = 0; i < 2; i++) {
             for (Player p : players) {
@@ -294,524 +289,6 @@ public class GameScreen implements Screen {
             }
         }
     }
-
-    /**
-     * A simple helper method to swap the stage
-     * @param newStage the next stage to be swapped to
-     */
-    /*
-    private void swapStage(Stage newStage) {
-        currentStage = newStage;
-        Gdx.input.setInputProcessor(currentStage);
-    }*/
-
-    /**
-     * Run a new betting round
-     * Set the current bid to 0
-     * Set each players current bid to 0
-     * Iterate over each opponent and have them make a bid according to their ai
-     *
-     * For now, start with the player, and then ask each opponent for input
-     */
-    /*
-    private void newBettingRound() {
-        System.out.println("New Betting Round!");
-        swapStage(bettingStage); // Set the stage to the betting stage
-
-        // Reset the current bid of the round
-        currentBid = 0;
-
-        // Set each player to have not bet
-        for (Player p : players) {
-            p.currentBid = 0;
-            p.hasBet = false;
-        }
-
-        // After the bid has been set, run a betting round
-        runBettingRound();
-    }
-     */
-
-    /**
-     * Run the next few AI players until the current player is a human player, or until the current
-     * player has already matched the current bid, in which case the betting round ends
-     */
-    /*
-    private void runBettingRound() {
-        Player p = players.get(currentPlayer);
-        System.out.println("Current Player = " + p.name());
-
-        // If the current player has already called the bid, then the betting round is over
-        if (p.currentBid == currentBid && p.hasBet) {
-
-            // If all players (or all players except one) have folded, end the round
-            if (allFolded()) {
-                endRound();
-                return;
-            }
-
-            // If this is the preliminary betting round, deal starting hands
-            if (startOfRound) {
-                startOfRound = false;
-                dealStartingHand();
-            }
-
-            // If the game has been called, end the round
-            if (isCalled) {
-                endRound();
-                return;
-            }
-
-            // At the end of the betting round is the drawing round
-            newDrawingRound();
-            return;
-        }
-
-        // Toggle this player to have bet (or called the initial bet of 0)
-        p.hasBet = true;
-
-        // For all AI, for now just have them match the bid
-        if (!p.isPlayer) {
-            int v = p.makeBet(mainPot, currentBid, players);
-            if (v == -1) {
-                p.folded = true;
-                nextPlayer();
-                addMessage(p.name() + " has folded!");
-            } else {
-                if (v > currentBid)
-                    addMessage(p.name() + " raises to " + v + " credits");
-                else if (v == currentBid) {
-                    if (v == 0)
-                        addMessage(p.name() + " checks");
-                    else
-                        addMessage(p.name() + " matches the bid of " + v + " credits");
-                }
-                else
-                    addMessage("ERROR: " + p.name() + " bets " + v + " credits");
-                p.modifyCredits(-(v - p.currentBid));
-                p.currentBid += v;
-                currentBid = v;
-                mainPot += v;
-            }
-            nextPlayer();
-            runBettingRound();
-        }
-    }
-
-     */
-
-    /**
-     * A function that calls the input player to match the current bid if they can afford
-     * it, otherwise force them to fold
-     * @param p the player to call the current bid
-     */
-    private void matchCurrentBid(Player p) {
-        int v = currentBid - p.currentBid;
-        if (v > p.credits()) {
-            p.folded = true;
-            nextPlayer();
-            addMessage(p.name() + " has folded!");
-            return;
-        }
-        p.modifyCredits(-v);
-        p.currentBid += v;
-        mainPot += v;
-
-        if (currentBid == 0)
-            addMessage(p.name() + " checks");
-        else
-            addMessage(p.name() + " matches the bid of " + v + " credits");
-    }
-
-    /**
-     * Raise the current bid to a new value denoted by value, and then bet enough to bring
-     * player.currentBid to the new currentBid
-     * @param value the string representation of the new bid, it is always an integer
-     */
-    /*
-    private void playerRaise(String value) {
-        int newbid = Integer.parseInt(value);
-
-        int v = newbid - player.currentBid;
-        if (newbid < currentBid) {
-            addMessage("Error: You cannot raise to lesser value");
-            return;
-        } else if (v > player.credits()) {
-            addMessage("Error: You cannot raise to more credits than you have");
-            return;
-        }
-        currentBid = newbid;
-        player.modifyCredits(-v);
-        player.currentBid += v;
-        mainPot += v;
-        addMessage(player.name() + " raises the current bid to " + currentBid);
-        swapStage(bettingStage);
-        nextPlayer();
-        runBettingRound();
-    }
-
-     */
-
-    /**
-     * Set up a new drawing round, swapping the stage and making sure all players have not yet gone
-     */
-    /*
-    private void newDrawingRound() {
-        System.out.println("New Drawing Round!");
-        // Set the stage to the drawing stage, either with or without call
-        if (untilCall > 0)
-            swapStage(drawingStage);
-        else
-            swapStage(drawingStage2);
-
-        // Set all players to have not gone yet
-        for (Player p : players)
-            p.hasDrawn = false;
-
-        // After the bid has been set, run a drawing round
-        runDrawingRound();
-    }
-
-     */
-
-    /**
-     * Run the next few AI players until the current player is a human player, or until the current
-     * player has already already gone, in which case move to another betting round
-     */
-    /*
-    private void runDrawingRound() {
-        Player p = players.get(currentPlayer);
-        System.out.println("Current Player = " + p.name());
-
-        // If the current player has already gone this round, then the round ends and we move on to a new betting round
-        if (p.hasDrawn) {
-            untilCall--;
-            newBettingRound();
-        }
-
-        // For all AI
-        else if (!p.isPlayer) {
-            p.hasDrawn = true;
-
-            // Get the players choice based on their ai
-            int c = p.drawChoice(untilCall);
-            if (c == -1) {
-                // Call
-                addMessage(p.name() + " calls the round");
-                newBettingRound();
-                isCalled = true;
-                return;
-            } else if (c == 0) {
-                // Stand
-                addMessage(p.name() + " stands");
-            } else if (c == 1) {
-                // Draw
-                drawCard(p);
-            }
-
-            nextPlayer();
-            runDrawingRound();
-        }
-    }
-     */
-
-    /**
-     * A helper function that has the input player draw a card
-     * @param p player
-     */
-    private void drawCard(Player p) {
-       p.addCard(deck.drawCard());
-       addMessage(p.name() + " draws a card");
-    }
-
-    /**
-     * Determine if all players or all players minus 1 have folded so that the round ends
-     * @return true if this condition is met, false otherwise
-     */
-    private boolean allFolded() {
-        boolean oneNotFolded = false;
-        for (Player p : players) {
-            if (p.folded)
-                continue;
-            if (oneNotFolded)
-                return false;
-            else
-                oneNotFolded = true;
-        }
-        return true;
-    }
-
-    /**
-     * End the round and determine the winner. This happens after a final betting round
-     * once the game has been called
-     */
-    private void endRound() {
-        // First, find all the players who bombed out, they will be folded and they pay
-        // credits equal to the main pot into the sabacc pot
-        betweenRounds = true;
-        for (Player p : players) {
-            if (!p.folded) {
-                System.out.println(p.name() + " : " + p.score());
-                if (Math.abs(p.score()) > 23) {
-                    p.folded = true;
-                    p.modifyCredits(-mainPot);
-                    sabaccPot += mainPot;
-                    addMessage(p.name() + " has bombed out!");
-                }
-            }
-        }
-
-        // Then iterate over each non-folded player and compare them to the winner
-        // Currently does not account for multiple tied winners
-        Player winner = null;
-        int currentScore = 0;
-        for (Player p : players) {
-            if (p.folded)
-                continue;
-            if (winner == null) {
-                winner = p;
-                currentScore = Math.abs(p.score());
-            } else {
-                if (Math.abs(p.score()) > currentScore || p.idiotsArray()) {
-                    winner = p;
-                    currentScore = Math.abs(p.score());
-                }
-            }
-        }
-        if (winner == null) {
-            addMessage("There was no winner this round!");
-        }
-        else if (currentScore == 23 || winner.idiotsArray()) {
-            addMessage(winner.name() + " won " + (mainPot + sabaccPot) + " credits with a pure sabacc!");
-            winner.modifyCredits(mainPot + sabaccPot);
-            mainPot = 0;
-            sabaccPot = 0;
-        } else {
-            addMessage(winner.name() + " won " + mainPot + " credits with a hand of " + currentScore + "!");
-            winner.modifyCredits(mainPot);
-            mainPot = 0;
-        }
-
-        // After allocating credits, ask the player to start the next round
-       // swapStage(nextRoundStage);
-    }
-
-    /**
-     * Set up the three buttons for the betting round
-     * They are:
-     *  - Bet (call the current bid)
-     *  - Raise (raise the current bid)
-     *  - Fold (drop out of the round)
-     */
-    /*
-    private void initializeBettingButtons() {
-        bettingStage = new Stage(viewport);
-
-        // All 3 buttons use the same style
-        TextButton.TextButtonStyle buttonStyle = new TextButton.TextButtonStyle();
-        buttonStyle.font = game.font32;
-        buttonStyle.up = uiSkin.getDrawable("button3-up");
-        buttonStyle.down = uiSkin.getDrawable("button3-down");
-
-        // BET
-        TextButton betButton = new TextButton("Bet", buttonStyle);
-        betButton.setWidth(200);
-        betButton.setHeight(128);
-        betButton.setPosition(0,0);
-        betButton.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent e, float x, float y) {
-                Player p = players.get(currentPlayer);
-                if (!p.isPlayer)
-                    return;
-                matchCurrentBid(p);
-                nextPlayer();
-                runBettingRound();
-            }
-        });
-
-        // Raise
-        TextButton raiseButton = new TextButton("Raise", buttonStyle);
-        raiseButton.setWidth(200);
-        raiseButton.setHeight(128);
-        raiseButton.setPosition(200,0);
-        raiseButton.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent e, float x, float y) {
-                swapStage(setBetStage);
-            }
-        });
-
-        // Fold
-        TextButton foldButton = new TextButton("Fold", buttonStyle);
-        foldButton.setWidth(200);
-        foldButton.setHeight(128);
-        foldButton.setPosition(400,0);
-        foldButton.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent e, float x, float y) {
-                Player p = players.get(currentPlayer);
-                if (p.isPlayer) {
-                    p.folded = true;
-                    nextPlayer();
-                    runBettingRound();
-                }
-            }
-        });
-
-        bettingStage.addActor(betButton);
-        bettingStage.addActor(raiseButton);
-        bettingStage.addActor(foldButton);
-    }
-
-     */
-
-    /**
-     * Set up the two buttons for the drawing before a player can call
-     * They are:
-     *  - Draw (draw a card)
-     *  - Stand (don't draw a card)
-     */
-    /*
-    private void initializeDrawingButtons() {
-        drawingStage = new Stage(viewport);
-
-        // Both active buttons use the same style
-        TextButton.TextButtonStyle buttonStyle = new TextButton.TextButtonStyle();
-        buttonStyle.font = game.font32;
-        buttonStyle.up = uiSkin.getDrawable("button3-up");
-        buttonStyle.down = uiSkin.getDrawable("button3-down");
-
-        // DRAW
-        TextButton drawButton = new TextButton("Draw", buttonStyle);
-        drawButton.setWidth(200);
-        drawButton.setHeight(128);
-        drawButton.setPosition(0,0);
-        drawButton.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent e, float x, float y) {
-                Player p = players.get(currentPlayer);
-                if (p.isPlayer) {
-                    p.hasDrawn = true;
-                    drawCard(p);
-                    nextPlayer();
-                    runDrawingRound();
-                }
-            }
-        });
-
-        // STAND
-        TextButton standButton = new TextButton("Stand", buttonStyle);
-        standButton.setWidth(200);
-        standButton.setHeight(128);
-        standButton.setPosition(200,0);
-        standButton.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent e, float x, float y) {
-                Player p = players.get(currentPlayer);
-                if (p.isPlayer) {
-                    p.hasDrawn = true;
-                    addMessage(p.name() + " stands");
-                    nextPlayer();
-                    runDrawingRound();
-                }
-            }
-        });
-
-        // Both buttons use the same style
-        TextButton.TextButtonStyle redButtonStyle = new TextButton.TextButtonStyle();
-        redButtonStyle.font = game.font32;
-        redButtonStyle.up = uiSkin.getDrawable("button3-unavailable");
-
-        // CALL THAT DOESNT DO ANYTHING HERE
-        TextButton callButton = new TextButton("Call", redButtonStyle);
-        callButton.setWidth(200);
-        callButton.setHeight(128);
-        callButton.setPosition(400,0);
-
-        drawingStage.addActor(drawButton);
-        drawingStage.addActor(standButton);
-        drawingStage.addActor(callButton);
-    }
-
-     */
-
-    /**
-     * Set up the three buttons for the drawing after a player can call
-     * They are:
-     *  - Draw (draw a card)
-     *  - Stand (don't draw a card)
-     *  - Call (end the round after one final betting round)
-     */
-    /*
-    private void initializeDrawingButtonsWithCall() {
-        drawingStage2 = new Stage(viewport);
-
-        // Both buttons use the same style
-        TextButton.TextButtonStyle buttonStyle = new TextButton.TextButtonStyle();
-        buttonStyle.font = game.font32;
-        buttonStyle.up = uiSkin.getDrawable("button3-up");
-        buttonStyle.down = uiSkin.getDrawable("button3-down");
-
-        // DRAW
-        TextButton drawButton = new TextButton("Draw", buttonStyle);
-        drawButton.setWidth(200);
-        drawButton.setHeight(128);
-        drawButton.setPosition(0,0);
-        drawButton.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent e, float x, float y) {
-                Player p = players.get(currentPlayer);
-                if (p.isPlayer) {
-                    p.hasDrawn = true;
-                    drawCard(p);
-                    nextPlayer();
-                    runDrawingRound();
-                }
-            }
-        });
-
-        // STAND
-        TextButton standButton = new TextButton("Stand", buttonStyle);
-        standButton.setWidth(200);
-        standButton.setHeight(128);
-        standButton.setPosition(200,0);
-        standButton.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent e, float x, float y) {
-                Player p = players.get(currentPlayer);
-                if (p.isPlayer) {
-                    p.hasDrawn = true;
-                    addMessage(p.name() + " stands");
-                    nextPlayer();
-                    runDrawingRound();
-                }
-            }
-        });
-
-        // CALL
-        TextButton callButton = new TextButton("Call", buttonStyle);
-        callButton.setWidth(200);
-        callButton.setHeight(128);
-        callButton.setPosition(400,0);
-        callButton.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent e, float x, float y) {
-                Player p = players.get(currentPlayer);
-                if (p.isPlayer) {
-                    addMessage(p.name() + " calls the round");
-                    newBettingRound();
-                    isCalled = true;
-                }
-            }
-        });
-
-        drawingStage2.addActor(drawButton);
-        drawingStage2.addActor(standButton);
-        drawingStage2.addActor(callButton);
-    }
-
-     */
 
     /**
      * One large button to start the next round of play
