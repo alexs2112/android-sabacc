@@ -23,6 +23,7 @@ public class Sabacc extends Game {
 
 	// Some extra settings
 	public int maxMessages;
+	public float aiTurnLength;
 	
 	@Override
 	public void create () {
@@ -38,6 +39,7 @@ public class Sabacc extends Game {
 
 		// Set some extra settings
 		maxMessages = 8;
+		aiTurnLength = 0.5f;
 
 		this.setScreen(new GameScreen(this, 3, 50));
 	}

@@ -8,7 +8,7 @@ public class Player {
     public String name() { return name; }
 
     // A bool to determine if this is a player or not to check if the game requires user input
-    final public boolean isPlayer;
+    final public boolean isHuman;
 
     // Handling credits
     private int credits;
@@ -44,7 +44,7 @@ public class Player {
     public boolean hasDrawn; // Not necessarily drawn a card, has gone in the drawing round
 
     public Player(boolean isPlayer, String name, int credits) {
-        this.isPlayer = isPlayer;
+        this.isHuman = isPlayer;
         this.name = name;
         this.credits = credits;
         hand = new Array<Card>();
@@ -90,17 +90,37 @@ public class Player {
         // If this player has all 5 cards in hand but a value of < 14, fold
         // Otherwise, call
         int aScore = Math.abs(score);
-        if (bid - currentBid > credits)
+        if (bid > 0 && bid - currentBid > credits)
             return -1;
-        if (aScore > 23)
+        if (aScore > 23 && bid > 0)
             return -1;
         if (aScore == 23)
-            return Math.max(bid - currentBid + (int)(mainPot * 0.2), credits);
+            return bid - currentBid + Math.max((int)(mainPot * 0.2), credits);
         if (aScore > 18)
-            return Math.max(bid - currentBid + (int)(mainPot * 0.1), credits);
-        if (numCards() == 5 && aScore < 14)
+            return bid - currentBid + Math.max((int)(mainPot * 0.1), credits);
+        if (numCards() == 5 && aScore < 14 && bid > 0)
             return -1;
 
         return bid - currentBid;
+    }
+
+    /**
+     * A method that decides if this player should call, stand, or draw in the drawing round
+     * @param untilCall how many rounds left until the round can be called
+     * @return -1 if this player calls, 0 if they stand, 1 if they draw
+     */
+    public int drawChoice(int untilCall) {
+        if (numCards() == 5 && untilCall <= 0)
+            return -1;
+        if (numCards() == 5)
+            return 0;
+        if (score < 16 && score > 0)
+            return 1;
+        if (score < 0 && score > -18)
+            return 1;
+        if (untilCall <= 0 && (score > 17 || score < -17))
+            return -1;
+        return 0;
+
     }
 }

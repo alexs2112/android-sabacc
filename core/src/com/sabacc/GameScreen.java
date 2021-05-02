@@ -1,48 +1,42 @@
 package com.sabacc;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
-import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.math.Vector3;
-import com.badlogic.gdx.scenes.scene2d.InputEvent;
-import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
-import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
-import com.badlogic.gdx.scenes.scene2d.ui.TextField;
-import com.badlogic.gdx.scenes.scene2d.ui.TextField.TextFieldFilter;
-import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Queue;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.sabacc.gamestage.*;
 
 public class GameScreen implements Screen {
-    final Sabacc game;
+    final public Sabacc game;
     final private OrthographicCamera camera;
 
     // An array of players in the game, with a reference to the main player
-    final private Array<Player> players;
-    final private Player player;
+    final public Array<Player> players;
+    final public Player player;
 
     // The index of the current player and a small helper function to increment it to
     // the next active player
     private int currentPlayer;
-    private void nextPlayer() {
+    public Player getCurrentPlayer() { return players.get(currentPlayer); }
+    public void nextPlayer() {
         currentPlayer = (currentPlayer + 1) % players.size;
         while (players.get(currentPlayer).folded)
             currentPlayer = (currentPlayer + 1) % players.size;
     }
 
     // The game deck
-    final private Deck deck;
+    final public Deck deck;
 
     // The array of past messages
     final private Queue<String> messages;
-    private void addMessage(String message) {
+    public void addMessage(String message) {
         System.out.println(message);
         messages.addLast(message);
         while (messages.size > game.maxMessages)
@@ -72,20 +66,24 @@ public class GameScreen implements Screen {
     // Between rounds, to display opponents hands (if any) and their hand values
     private boolean betweenRounds;
 
+    // The timer used to add a delay between ai actions
+    private SabaccTimer timer;
+
     // The currently selected card, defaults to null
     private Card selected;
 
     // Keep track of the current stage, either for the betting round or the drawing round
-    private Stage currentStage;     // The current stage to be drawn
-    private Stage bettingStage;     // Bet (match the current bet), Raise (raise the bet), Fold (drop out of the round)
-    private Stage drawingStage;     // Without the option to call
-    private Stage drawingStage2;    // With the option to call
-    private Stage nextRoundStage;   // In between rounds, to see final hands
-    private Stage setBetStage;      // Allows the player to set their current bet
     final private FitViewport viewport;
 
+    public DrawingStage drawingStage;
+    private GameStage currentStage;
+    public void setGameStage(GameStage next) {
+        currentStage = next;
+        currentStage.start();
+    }
+
     // The skin for different buttons
-    final private Skin uiSkin;
+    final public Skin uiSkin;
     final private Drawable playerbox;
 
     public GameScreen(final Sabacc game, int numOfOpponents, int ante) {
@@ -98,6 +96,7 @@ public class GameScreen implements Screen {
         this.ante = ante;
         messages = new Queue<String>();
         betweenRounds = true;
+        timer = new SabaccTimer();
 
         // Load the skin for the ui and the viewport for the different button stages
         uiSkin = new Skin();
@@ -113,13 +112,8 @@ public class GameScreen implements Screen {
             players.add(new Player(false, "Opponent " + i, 500));
         }
 
-        initializeBettingButtons();
-        initializeDrawingButtons();
-        initializeDrawingButtonsWithCall();
-        initializeNextRoundButton();
-        initializeSettingBet();
-
-        swapStage(nextRoundStage);
+        drawingStage = new DrawingStage(this, viewport);
+        setGameStage(drawingStage);
     }
 
     @Override
@@ -161,7 +155,8 @@ public class GameScreen implements Screen {
         game.batch.end();
 
         // Show the current stage below the other drawings
-        currentStage.draw();
+        //currentStage.draw();
+        currentStage.show();
 
         // Take player input to determine if they selected a card in their hand
         if (Gdx.input.justTouched()) {
@@ -173,6 +168,17 @@ public class GameScreen implements Screen {
                 int i = (int)(touch.x / 120);
                 if (i < player.numCards())
                     selected = player.hand().get(i);
+            }
+        }
+
+        // Check the timer, if an ai event has to happen
+        if (!getCurrentPlayer().isHuman) {
+            System.out.println(timer.ended);
+            if (timer.ended) {
+                timer.reset();
+                currentStage.aiAction();
+            } else if (!timer.ended && !timer.started){
+                timer.call(game.aiTurnLength);
             }
         }
     }
@@ -216,8 +222,12 @@ public class GameScreen implements Screen {
 
             if (betweenRounds)
                 game.font24.draw(game.batch, "H: " + p.score(), 12, y);
-            else
-                game.font24.draw(game.batch, "H: ?", 12, y);
+            else {
+                if (p.folded)
+                    game.font24.draw(game.batch, "H: Folded", 12, y);
+                else
+                    game.font24.draw(game.batch, "H: ?", 12, y);
+            }
 
             for (int c = 0; c < p.numCards(); c++) {
                 // If game is not over, draw the card back
@@ -270,7 +280,7 @@ public class GameScreen implements Screen {
         isCalled = false;
 
         // Rounds begin with a preliminary betting round
-        newBettingRound();
+        //newBettingRound();
     }
 
     /**
@@ -289,10 +299,11 @@ public class GameScreen implements Screen {
      * A simple helper method to swap the stage
      * @param newStage the next stage to be swapped to
      */
+    /*
     private void swapStage(Stage newStage) {
         currentStage = newStage;
         Gdx.input.setInputProcessor(currentStage);
-    }
+    }*/
 
     /**
      * Run a new betting round
@@ -302,6 +313,7 @@ public class GameScreen implements Screen {
      *
      * For now, start with the player, and then ask each opponent for input
      */
+    /*
     private void newBettingRound() {
         System.out.println("New Betting Round!");
         swapStage(bettingStage); // Set the stage to the betting stage
@@ -318,11 +330,13 @@ public class GameScreen implements Screen {
         // After the bid has been set, run a betting round
         runBettingRound();
     }
+     */
 
     /**
      * Run the next few AI players until the current player is a human player, or until the current
      * player has already matched the current bid, in which case the betting round ends
      */
+    /*
     private void runBettingRound() {
         Player p = players.get(currentPlayer);
         System.out.println("Current Player = " + p.name());
@@ -364,21 +378,27 @@ public class GameScreen implements Screen {
                 nextPlayer();
                 addMessage(p.name() + " has folded!");
             } else {
-                //addMessage(p.name() + " bets " + v + " credits");
                 if (v > currentBid)
                     addMessage(p.name() + " raises to " + v + " credits");
-                if (v == currentBid)
-                    addMessage(p.name() + " calls the bid of " + v + " credits");
+                else if (v == currentBid) {
+                    if (v == 0)
+                        addMessage(p.name() + " checks");
+                    else
+                        addMessage(p.name() + " matches the bid of " + v + " credits");
+                }
                 else
                     addMessage("ERROR: " + p.name() + " bets " + v + " credits");
-                p.modifyCredits(-v);
+                p.modifyCredits(-(v - p.currentBid));
                 p.currentBid += v;
+                currentBid = v;
                 mainPot += v;
             }
             nextPlayer();
             runBettingRound();
         }
     }
+
+     */
 
     /**
      * A function that calls the input player to match the current bid if they can afford
@@ -396,7 +416,11 @@ public class GameScreen implements Screen {
         p.modifyCredits(-v);
         p.currentBid += v;
         mainPot += v;
-        addMessage(p.name() + " matches the current bid of " + currentBid + " credits");
+
+        if (currentBid == 0)
+            addMessage(p.name() + " checks");
+        else
+            addMessage(p.name() + " matches the bid of " + v + " credits");
     }
 
     /**
@@ -404,6 +428,7 @@ public class GameScreen implements Screen {
      * player.currentBid to the new currentBid
      * @param value the string representation of the new bid, it is always an integer
      */
+    /*
     private void playerRaise(String value) {
         int newbid = Integer.parseInt(value);
 
@@ -425,9 +450,12 @@ public class GameScreen implements Screen {
         runBettingRound();
     }
 
+     */
+
     /**
      * Set up a new drawing round, swapping the stage and making sure all players have not yet gone
      */
+    /*
     private void newDrawingRound() {
         System.out.println("New Drawing Round!");
         // Set the stage to the drawing stage, either with or without call
@@ -444,10 +472,13 @@ public class GameScreen implements Screen {
         runDrawingRound();
     }
 
+     */
+
     /**
      * Run the next few AI players until the current player is a human player, or until the current
      * player has already already gone, in which case move to another betting round
      */
+    /*
     private void runDrawingRound() {
         Player p = players.get(currentPlayer);
         System.out.println("Current Player = " + p.name());
@@ -461,14 +492,28 @@ public class GameScreen implements Screen {
         // For all AI
         else if (!p.isPlayer) {
             p.hasDrawn = true;
-            if (Math.random() < 0.5)
-                drawCard(p);
-            else
+
+            // Get the players choice based on their ai
+            int c = p.drawChoice(untilCall);
+            if (c == -1) {
+                // Call
+                addMessage(p.name() + " calls the round");
+                newBettingRound();
+                isCalled = true;
+                return;
+            } else if (c == 0) {
+                // Stand
                 addMessage(p.name() + " stands");
+            } else if (c == 1) {
+                // Draw
+                drawCard(p);
+            }
+
             nextPlayer();
             runDrawingRound();
         }
     }
+     */
 
     /**
      * A helper function that has the input player draw a card
@@ -535,9 +580,8 @@ public class GameScreen implements Screen {
         }
         if (winner == null) {
             addMessage("There was no winner this round!");
-            return;
         }
-        if (currentScore == 23 || winner.idiotsArray()) {
+        else if (currentScore == 23 || winner.idiotsArray()) {
             addMessage(winner.name() + " won " + (mainPot + sabaccPot) + " credits with a pure sabacc!");
             winner.modifyCredits(mainPot + sabaccPot);
             mainPot = 0;
@@ -549,7 +593,7 @@ public class GameScreen implements Screen {
         }
 
         // After allocating credits, ask the player to start the next round
-        swapStage(nextRoundStage);
+       // swapStage(nextRoundStage);
     }
 
     /**
@@ -559,6 +603,7 @@ public class GameScreen implements Screen {
      *  - Raise (raise the current bid)
      *  - Fold (drop out of the round)
      */
+    /*
     private void initializeBettingButtons() {
         bettingStage = new Stage(viewport);
 
@@ -619,12 +664,15 @@ public class GameScreen implements Screen {
         bettingStage.addActor(foldButton);
     }
 
+     */
+
     /**
      * Set up the two buttons for the drawing before a player can call
      * They are:
      *  - Draw (draw a card)
      *  - Stand (don't draw a card)
      */
+    /*
     private void initializeDrawingButtons() {
         drawingStage = new Stage(viewport);
 
@@ -686,6 +734,8 @@ public class GameScreen implements Screen {
         drawingStage.addActor(callButton);
     }
 
+     */
+
     /**
      * Set up the three buttons for the drawing after a player can call
      * They are:
@@ -693,6 +743,7 @@ public class GameScreen implements Screen {
      *  - Stand (don't draw a card)
      *  - Call (end the round after one final betting round)
      */
+    /*
     private void initializeDrawingButtonsWithCall() {
         drawingStage2 = new Stage(viewport);
 
@@ -760,9 +811,12 @@ public class GameScreen implements Screen {
         drawingStage2.addActor(callButton);
     }
 
+     */
+
     /**
      * One large button to start the next round of play
      */
+    /*
     private void initializeNextRoundButton() {
         nextRoundStage = new Stage(viewport);
 
@@ -785,9 +839,12 @@ public class GameScreen implements Screen {
         nextRoundStage.addActor(startButton);
     }
 
+     */
+
     /**
      * Initialize the bet setting stage
      */
+    /*
     private void initializeSettingBet() {
         setBetStage = new Stage(viewport);
 
@@ -846,6 +903,8 @@ public class GameScreen implements Screen {
         setBetStage.addActor(cancelButton);
     }
 
+     */
+
     @Override
     public void resize(int width, int height) {
 
@@ -869,11 +928,11 @@ public class GameScreen implements Screen {
     @Override
     public void dispose() {
         currentStage.dispose();
-        bettingStage.dispose();
+        //bettingStage.dispose();
         drawingStage.dispose();
-        drawingStage2.dispose();
-        nextRoundStage.dispose();
-        setBetStage.dispose();
+        //drawingStage2.dispose();
+        //nextRoundStage.dispose();
+        //setBetStage.dispose();
         uiSkin.dispose();
     }
 }
