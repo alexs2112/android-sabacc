@@ -15,6 +15,16 @@ public class Player {
     public int credits() { return credits; }
     public void modifyCredits(int x) { credits += x; }
 
+    // A decimal of the current amount of credits, when betting a player will bet a minimum of their
+    // minbid and fold if it is above their maxbid
+    private float minbid;
+    private float maxbid;
+    public void setBidRange(float min, float max) { minbid = min; maxbid = max; }
+
+    // How much a player has bid over an entire betting round, to stop them from just raising every
+    // single time it is their turn to raise
+    public int roundbid;
+
     // Handling the hand
     private Array<Card> hand;
     public Array<Card> hand() { return hand; }
@@ -79,29 +89,42 @@ public class Player {
      * @param mainPot the current value of the main pot
      * @param bid the current bid of the hand
      * @param players the array of players in the game
-     * @return -1 if the player folds, an integer of how much they bet otherwise
+     * @return -1 if the player folds, an integer of how much the new current bid is
      */
     public int makeBet(int mainPot, int bid, Array<Player> players) {
-        // For now, make it extremely simple, if the hand value is abs(19-22), make a bet
-        // of 10% of the pot value
-        // If the hand value is abs(23), make a bet of 20%
-        // If the hand value is bombed out, then fold
-        // If the player cannot afford to call the bid, fold
-        // If this player has all 5 cards in hand but a value of < 14, fold
-        // Otherwise, call
+        // For now, make it extremely simple
+        // Folding Conditions:
+        //  - If the player cannot afford to call the bid
+        //  - If the current bid is greater than this players max bid
+        //  - If this player has all 5 cards in hand but a hand value less than 14
+        //  - If the hand value is bombed out, then fold
+        // Raising Conditions:
+        //  - If the player has a hand > 17, raise by minbid
+        //  - If the player has a pure sabacc, raise by double minbid
+        //  - If the player would bid and the current bid or their round bid is already > those values, just call
+        // Otherwise, just call
         int aScore = Math.abs(score);
-        if (bid > 0 && bid - currentBid > credits)
+
+        // If they cannot afford to call, then fold
+        if (bid - currentBid > credits)
             return -1;
+        // If they are bombed out and there is a nonzero bid, fold
         if (aScore > 23 && bid > 0)
             return -1;
-        if (aScore == 23)
-            return bid - currentBid + Math.max((int)(mainPot * 0.2), credits);
-        if (aScore > 18)
-            return bid - currentBid + Math.max((int)(mainPot * 0.1), credits);
+        // If they have a bad hand with no chance of drawing more cards, fold
         if (numCards() == 5 && aScore < 14 && bid > 0)
             return -1;
 
-        return bid - currentBid;
+        // If they have a pure sabacc, raise the bid by double minbid
+        if (aScore == 23 && bid < 2*minbid * credits && roundbid < 2*minbid * credits)
+            return bid + (int)(credits * 2 * minbid);
+
+        // If they have a good hand, raise the bid by minbid
+        if (aScore > 17 && bid < minbid * credits && roundbid < minbid * credits)
+            return bid + (int)(credits * minbid);
+
+        // Otherwise, match the bid
+        return bid;
     }
 
     /**

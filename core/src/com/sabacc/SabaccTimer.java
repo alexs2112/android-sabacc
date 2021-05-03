@@ -23,11 +23,9 @@ public class SabaccTimer {
      */
     public void call(float delay) {
         started = true;
-        System.out.println("Timer Started");
         task = new Timer.Task() {
             @Override
             public void run() {
-                System.out.println("Timer Ended");
                 started = false;
                 ended = true;
             }

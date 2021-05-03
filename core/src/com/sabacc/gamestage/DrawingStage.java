@@ -25,7 +25,7 @@ public class DrawingStage implements GameStage {
 
     // How many drawing rounds are run until a player can call the hand
     private int untilCall;
-    public void resetUntilCall() { untilCall = 0; }
+    public void resetUntilCall() { untilCall = 4; }
 
     public DrawingStage(final GameScreen main, final FitViewport viewport) {
         this.main = main;

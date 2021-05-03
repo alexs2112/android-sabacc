@@ -24,7 +24,12 @@ public class GameScreen implements Screen {
     // The index of the current player and a small helper function to increment it to
     // the next active player
     private int currentPlayer;
-    public Player getCurrentPlayer() { return players.get(currentPlayer); }
+    public Player getCurrentPlayer() {
+        // Double check, this is a bit lazy, fix it later
+        while (currentPlayer >= players.size)
+            currentPlayer = (currentPlayer + 1) % players.size;
+        return players.get(currentPlayer);
+    }
     public void nextPlayer() {
         currentPlayer = (currentPlayer + 1) % players.size;
         while (players.get(currentPlayer).folded)
@@ -71,7 +76,8 @@ public class GameScreen implements Screen {
 
     // A set of gamestages that are swapped between
     public DrawingStage drawingStage;
-    public GameStage bettingStage;
+    public BettingStage bettingStage;
+    public NextRoundStage nextRoundStage;
     private GameStage currentStage;
     public void setGameStage(GameStage next) {
         currentStage = next;
@@ -104,16 +110,20 @@ public class GameScreen implements Screen {
         players = new Array<Player>();
         player = new Player(true, "Alex", 500);
         players.add(player);
+        Player p;
         for (int i = 0; i < numOfOpponents; i++) {
-            players.add(new Player(false, "Opponent " + i, 500));
+            p = new Player(false, "Opponent " + i, 500);
+            p.setBidRange(0.2f, 0.4f);
+            players.add(p);
         }
 
         // Initialize all game stages
         drawingStage = new DrawingStage(this, viewport);
         bettingStage = new BettingStage(this, viewport);
+        nextRoundStage = new NextRoundStage(this, viewport);
 
-        // Then start a new round
-        startNewRound();
+        // Start the game
+        setGameStage(nextRoundStage);
     }
 
     @Override
@@ -132,9 +142,6 @@ public class GameScreen implements Screen {
 
         game.batch.begin();
 
-        // Show the current stage
-        currentStage.show();
-
         // Draw the players hand
         displayHand();
 
@@ -151,6 +158,9 @@ public class GameScreen implements Screen {
 
         // Then draw each opponents box under the messages
         drawPlayerBoxes(game.height - 100 - game.maxMessages*20 - 96);
+
+        // Show the current stage on top of everything
+        currentStage.show();
 
         game.batch.end();
 
@@ -169,7 +179,6 @@ public class GameScreen implements Screen {
 
         // Check the timer, if an ai event has to happen
         if (!getCurrentPlayer().isHuman) {
-            System.out.println(timer.ended);
             if (timer.ended) {
                 timer.reset();
                 currentStage.aiAction();
@@ -251,13 +260,18 @@ public class GameScreen implements Screen {
             p.refreshScore();
             p.hand().clear();
         }
+        drawingStage.resetUntilCall();
+        bettingStage.resetBettingRound();
 
-        for (int i = 0; i < players.size; i++) {
+        // Trying to fix a crash that happens when a bunch of players bomb out
+        int max = players.size;
+        for (int i = 0; i < max; i++) {
             if (players.get(i).credits() >= ante * 2)
                 continue;
             addMessage(players.get(i).name() + " drops from the game!");
             players.removeIndex(i);
             i--;
+            max--;
         }
 
         // For now, automatically ante each player
@@ -290,98 +304,6 @@ public class GameScreen implements Screen {
         }
     }
 
-    /**
-     * One large button to start the next round of play
-     */
-    /*
-    private void initializeNextRoundButton() {
-        nextRoundStage = new Stage(viewport);
-
-        TextButton.TextButtonStyle buttonStyle = new TextButton.TextButtonStyle();
-        buttonStyle.font = game.font32;
-        buttonStyle.up = uiSkin.getDrawable("button1-up");
-        buttonStyle.down = uiSkin.getDrawable("button1-down");
-
-        TextButton startButton = new TextButton("Start Next Round", buttonStyle);
-        startButton.setWidth(600);
-        startButton.setHeight(128);
-        startButton.setPosition(0,0);
-        startButton.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent e, float x, float y) {
-                startNewRound();
-            }
-        });
-
-        nextRoundStage.addActor(startButton);
-    }
-
-     */
-
-    /**
-     * Initialize the bet setting stage
-     */
-    /*
-    private void initializeSettingBet() {
-        setBetStage = new Stage(viewport);
-
-        // The start of where the text field and buttons will be drawn
-        int y = game.height / 2 + 100;
-
-        TextField.TextFieldStyle style = new TextField.TextFieldStyle();
-        style.font = game.font24;
-        style.background = uiSkin.getDrawable("button1-up");
-        style.fontColor = Color.WHITE;
-        final TextField field = new TextField("", style);
-        field.setPosition(0, y);
-        field.setSize(600,96);
-        field.setTextFieldFilter(new TextFieldFilter.DigitsOnlyFilter());
-        field.setTextFieldListener(new TextField.TextFieldListener() {
-            @Override
-            public void keyTyped(TextField textField, char c) {
-                System.out.print(field.getText());
-                if (c == '\n')
-                    playerRaise(field.getText());
-            }
-        });
-        setBetStage.addActor(field);
-
-        y -= 96;
-
-        TextButton.TextButtonStyle buttonStyle = new TextButton.TextButtonStyle();
-        buttonStyle.font = game.font32;
-        buttonStyle.up = uiSkin.getDrawable("small-button3-up");
-        buttonStyle.down = uiSkin.getDrawable("small-button3-down");
-
-        // Accept
-        TextButton acceptButton = new TextButton("Accept", buttonStyle);
-        acceptButton.setWidth(200);
-        acceptButton.setHeight(96);
-        acceptButton.setPosition(0,y);
-        acceptButton.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent e, float x, float y) {
-                playerRaise(field.getText());
-            }
-        });
-        setBetStage.addActor(acceptButton);
-
-        // Cancel
-        TextButton cancelButton = new TextButton("Cancel", buttonStyle);
-        cancelButton.setWidth(200);
-        cancelButton.setHeight(96);
-        cancelButton.setPosition(400,y);
-        cancelButton.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent e, float x, float y) {
-                swapStage(bettingStage);
-            }
-        });
-        setBetStage.addActor(cancelButton);
-    }
-
-     */
-
     @Override
     public void resize(int width, int height) {
 
@@ -405,11 +327,9 @@ public class GameScreen implements Screen {
     @Override
     public void dispose() {
         currentStage.dispose();
-        //bettingStage.dispose();
+        bettingStage.dispose();
         drawingStage.dispose();
-        //drawingStage2.dispose();
-        //nextRoundStage.dispose();
-        //setBetStage.dispose();
+        nextRoundStage.dispose();
         uiSkin.dispose();
     }
 }

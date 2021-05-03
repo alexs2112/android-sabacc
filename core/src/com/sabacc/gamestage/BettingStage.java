@@ -1,9 +1,11 @@
 package com.sabacc.gamestage;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.scenes.scene2d.ui.TextField;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.sabacc.GameScreen;
@@ -36,7 +38,7 @@ public class BettingStage implements GameStage {
         buttonStyle.down = main.uiSkin.getDrawable("button3-down");
 
         initializeCheckStage(buttonStyle);
-
+        initializeRaiseStage(buttonStyle);
     }
 
     @Override
@@ -64,6 +66,14 @@ public class BettingStage implements GameStage {
     }
 
     /**
+     * Resets each players total bid for the round to be 0
+     */
+    public void resetBettingRound() {
+        for (Player p : main.players)
+            p.roundbid = 0;
+    }
+
+    /**
      * Run the next few AI players until the current player is a human player, or until the current
      * player has already matched the current bid, in which case the betting round ends
      */
@@ -75,26 +85,32 @@ public class BettingStage implements GameStage {
         p.hasBet = true;
 
         // For all AI, for now just have them match the bid
-        int v = p.makeBet(main.mainPot, currentBid, main.players);
-        if (v == -1) {
+        int newbid = p.makeBet(main.mainPot, currentBid, main.players);
+        if (newbid == -1) {
             p.folded = true;
-            main.nextPlayer();
             main.addMessage(p.name() + " has folded!");
         } else {
-            if (v > currentBid)
-                main.addMessage(p.name() + " raises to " + v + " credits");
-            else if (v == currentBid) {
-                if (v == 0)
+            if (newbid > currentBid)
+                main.addMessage(p.name() + " raises to " + newbid + " credits");
+            else if (newbid == currentBid) {
+                if (newbid == 0)
                     main.addMessage(p.name() + " checks");
                 else
-                    main.addMessage(p.name() + " matches the bid of " + v + " credits");
-            }
-            else
-                main.addMessage("ERROR: " + p.name() + " bets " + v + " credits");
-            p.modifyCredits(-(v - p.currentBid));
-            p.currentBid += v;
-            currentBid = v;
-            main.mainPot += v;
+                    main.addMessage(p.name() + " matches the bid of " + newbid + " credits");
+            } else
+                main.addMessage("ERROR: " + p.name() + " bets " + newbid + " credits");
+
+            // Set the new currentBid
+            currentBid = newbid;
+
+            // Get the value of how much the player owes
+            newbid -= p.currentBid;
+            if (newbid < 0)
+                System.out.println("ERROR: NEGATIVE RAISE");
+            p.modifyCredits(-newbid);
+            p.currentBid += newbid;
+            p.roundbid += newbid;
+            main.mainPot += newbid;
         }
         main.nextPlayer();
         tryToEndRound();
@@ -167,37 +183,39 @@ public class BettingStage implements GameStage {
             main.addMessage(p.name() + " matches the bid of " + v + " credits");
             p.modifyCredits(-v);
             p.currentBid += v;
+            p.roundbid += v;
             main.mainPot += v;
         }
+        main.nextPlayer();
     }
 
     /**
      * Raise the current bid to a new value denoted by value, and then bet enough to bring
      * player.currentBid to the new currentBid
-     * @param value the string representation of the new bid, it is always an integer
+     * @param newbid the value of the new current bid that the player is trying
      */
-    /*
-    private void playerRaise(String value) {
-        int newbid = Integer.parseInt(value);
-
+    private void playerRaise(Player player,  int newbid) {
         int v = newbid - player.currentBid;
         if (newbid < currentBid) {
-            addMessage("Error: You cannot raise to lesser value");
+            main.addMessage("Error: You cannot raise to lesser value");
             return;
         } else if (v > player.credits()) {
-            addMessage("Error: You cannot raise to more credits than you have");
+            main.addMessage("Error: You cannot raise to more credits than you have");
             return;
         }
         currentBid = newbid;
         player.modifyCredits(-v);
         player.currentBid += v;
-        mainPot += v;
-        addMessage(player.name() + " raises the current bid to " + currentBid);
-        swapStage(bettingStage);
-        nextPlayer();
-        runBettingRound();
+        player.roundbid += v;
+        player.hasBet = true;
+        main.mainPot += v;
+        main.addMessage(player.name() + " raises the current bid to " + currentBid);
+
+        currentStage = checkStage;
+        Gdx.input.setInputProcessor(currentStage);
+        main.nextPlayer();
+        tryToEndRound();
     }
-     */
 
     /**
      * End the round and determine the winner. This happens after a final betting round
@@ -211,9 +229,10 @@ public class BettingStage implements GameStage {
             if (!p.folded) {
                 System.out.println(p.name() + " : " + p.score());
                 if (Math.abs(p.score()) > 23) {
+                    int value = Math.min(main.mainPot, p.credits());
                     p.folded = true;
-                    p.modifyCredits(-main.mainPot);
-                    main.sabaccPot += main.mainPot;
+                    p.modifyCredits(-value);
+                    main.sabaccPot += value;
                     main.addMessage(p.name() + " has bombed out!");
                 }
             }
@@ -251,8 +270,7 @@ public class BettingStage implements GameStage {
         }
 
         // After allocating credits, ask the player to start the next round
-        //main.setGameStage(main.bettingStage);
-        main.startNewRound();
+        main.setGameStage(main.nextRoundStage);
     }
 
     @Override
@@ -278,7 +296,6 @@ public class BettingStage implements GameStage {
                 if (p.isHuman) {
                     p.hasBet = true;
                     matchCurrentBid(p);
-                    main.nextPlayer();
                 }
             }
         });
@@ -291,7 +308,8 @@ public class BettingStage implements GameStage {
         raiseButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent e, float x, float y) {
-                //swapStage(setBetStage);
+                currentStage = raiseStage;
+                Gdx.input.setInputProcessor(currentStage);
             }
         });
 
@@ -305,6 +323,7 @@ public class BettingStage implements GameStage {
             public void clicked(InputEvent e, float x, float y) {
                 Player p = main.getCurrentPlayer();
                 if (p.isHuman) {
+                    main.addMessage(p.name() + " has folded!");
                     p.folded = true;
                     main.nextPlayer();
                 }
@@ -314,5 +333,62 @@ public class BettingStage implements GameStage {
         checkStage.addActor(betButton);
         checkStage.addActor(raiseButton);
         checkStage.addActor(foldButton);
+    }
+
+    /**
+     * Initialize the bet setting stage
+     */
+    private void initializeRaiseStage(TextButton.TextButtonStyle buttonStyle) {
+        raiseStage = new Stage(viewport);
+
+        // The start of where the text field and buttons will be drawn
+        int y = main.game.height / 2 + 100;
+
+        TextField.TextFieldStyle style = new TextField.TextFieldStyle();
+        style.font = main.game.font24;
+        style.background = main.uiSkin.getDrawable("button1-up");
+        style.fontColor = Color.WHITE;
+        final TextField field = new TextField("", style);
+        field.setPosition(0, y);
+        field.setSize(600,96);
+        field.setTextFieldFilter(new TextField.TextFieldFilter.DigitsOnlyFilter());
+        field.setTextFieldListener(new TextField.TextFieldListener() {
+            @Override
+            public void keyTyped(TextField textField, char c) {
+                System.out.print(field.getText());
+                if (c == '\n')
+                    playerRaise(main.player, Integer.parseInt(field.getText()));
+            }
+        });
+        raiseStage.addActor(field);
+
+        y -= 96;
+
+        // Accept
+        TextButton acceptButton = new TextButton("Accept", buttonStyle);
+        acceptButton.setWidth(200);
+        acceptButton.setHeight(96);
+        acceptButton.setPosition(0,y);
+        acceptButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent e, float x, float y) {
+                playerRaise(main.player, Integer.parseInt(field.getText()));
+            }
+        });
+        raiseStage.addActor(acceptButton);
+
+        // Cancel
+        TextButton cancelButton = new TextButton("Cancel", buttonStyle);
+        cancelButton.setWidth(200);
+        cancelButton.setHeight(96);
+        cancelButton.setPosition(400,y);
+        cancelButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent e, float x, float y) {
+                currentStage = checkStage;
+                Gdx.input.setInputProcessor(currentStage);
+            }
+        });
+        raiseStage.addActor(cancelButton);
     }
 }
