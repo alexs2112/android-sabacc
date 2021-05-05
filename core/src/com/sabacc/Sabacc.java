@@ -41,7 +41,11 @@ public class Sabacc extends Game {
 		maxMessages = 8;
 		aiTurnLength = 0.3f;
 
-		this.setScreen(new GameScreen(this, 3, 20));
+		// Make the graphics non-continuous, to save battery
+		Gdx.graphics.setContinuousRendering(false);
+		Gdx.graphics.requestRendering();
+
+		this.setScreen(new GameScreen(this, 4, 20));
 	}
 
 	@Override

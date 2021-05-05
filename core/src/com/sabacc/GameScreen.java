@@ -10,6 +10,7 @@ import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Queue;
 import com.badlogic.gdx.utils.ScreenUtils;
+import com.badlogic.gdx.utils.Timer;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.sabacc.gamestage.*;
 
@@ -78,7 +79,7 @@ public class GameScreen implements Screen {
     public DrawingStage drawingStage;
     public BettingStage bettingStage;
     public NextRoundStage nextRoundStage;
-    private GameStage currentStage;
+    public GameStage currentStage;
     public void setGameStage(GameStage next) {
         currentStage = next;
         currentStage.start();
@@ -98,7 +99,7 @@ public class GameScreen implements Screen {
         this.ante = ante;
         messages = new Queue<String>();
         betweenRounds = true;
-        timer = new SabaccTimer();
+        timer = new SabaccTimer(this);
 
         // Load the skin for the ui and the viewport for the different button stages
         uiSkin = new Skin();
@@ -113,7 +114,7 @@ public class GameScreen implements Screen {
         Player p;
         for (int i = 0; i < numOfOpponents; i++) {
             p = new Player(false, "Opponent " + i, 500);
-            p.setBidRange(0.2f, 0.4f);
+            p.setBidRange(0.2f, 0.6f);
             players.add(p);
         }
 
@@ -165,6 +166,7 @@ public class GameScreen implements Screen {
         game.batch.end();
 
         // Take player input to determine if they selected a card in their hand
+        // Apparently this works even with non-continuous rendering, thought I might have to change it to an input listener
         if (Gdx.input.justTouched()) {
             selected = null;
             Vector3 touch = new Vector3();
@@ -177,15 +179,10 @@ public class GameScreen implements Screen {
             }
         }
 
-        // Check the timer, if an ai event has to happen
-        if (!getCurrentPlayer().isHuman) {
-            if (timer.ended) {
-                timer.reset();
-                currentStage.aiAction();
-            } else if (!timer.ended && !timer.started){
+        // Start a short delay timer for the next ai player
+        if (!getCurrentPlayer().isHuman)
+            if (!timer.started)
                 timer.call(game.aiTurnLength);
-            }
-        }
     }
 
     /**
@@ -333,3 +330,32 @@ public class GameScreen implements Screen {
         uiSkin.dispose();
     }
 }
+
+class SabaccTimer {
+    public boolean started;
+    final private GameScreen screen;
+    private Timer.Task task;
+
+    public SabaccTimer(GameScreen s) {
+        screen = s;
+        started = false;
+    }
+
+    /**
+     * Will wait a specified time, after which ended will be set as true
+     * @param delay the number of seconds to wait for
+     */
+    public void call(float delay) {
+        started = true;
+        task = new Timer.Task() {
+            @Override
+            public void run() {
+                started = false;
+                if (screen.currentStage != null)
+                    screen.currentStage.aiAction();
+            }
+        };
+        Timer.instance().scheduleTask(task, delay);
+    }
+}
+

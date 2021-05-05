@@ -26,7 +26,7 @@ public class Player {
     public int roundbid;
 
     // Handling the hand
-    private Array<Card> hand;
+    private final Array<Card> hand;
     public Array<Card> hand() { return hand; }
     public int numCards() { return hand.size; }
 
@@ -91,7 +91,7 @@ public class Player {
      * @param players the array of players in the game
      * @return -1 if the player folds, an integer of how much the new current bid is
      */
-    public int makeBet(int mainPot, int bid, Array<Player> players) {
+    public int makeBet(int mainPot, int bid, Array<Player> players, boolean isCalled) {
         // For now, make it extremely simple
         // Folding Conditions:
         //  - If the player cannot afford to call the bid
@@ -108,19 +108,22 @@ public class Player {
         // If they cannot afford to call, then fold
         if (bid - currentBid > credits)
             return -1;
+        // If the current bid is greater than the max bid and you do not have a pure sabacc, fold
+        if (bid > maxbid * mainPot && aScore != 23)
+            return -1;
         // If they are bombed out and there is a nonzero bid, fold
-        if (aScore > 23 && bid > 0)
+        if (aScore > 23 && (bid > 0 || isCalled))
             return -1;
         // If they have a bad hand with no chance of drawing more cards, fold
         if (numCards() == 5 && aScore < 14 && bid > 0)
             return -1;
 
         // If they have a pure sabacc, raise the bid by double minbid
-        if (aScore == 23 && bid < 2*minbid * credits && roundbid < 2*minbid * credits)
+        if (aScore == 23 && bid < 2*minbid * credits && roundbid < 2*maxbid * credits)
             return bid + (int)(credits * 2 * minbid);
 
         // If they have a good hand, raise the bid by minbid
-        if (aScore > 17 && bid < minbid * credits && roundbid < minbid * credits)
+        if (aScore > 17 && bid < minbid * credits && roundbid < maxbid * credits)
             return bid + (int)(credits * minbid);
 
         // Otherwise, match the bid
@@ -141,7 +144,7 @@ public class Player {
             return 1;
         if (score < 0 && score > -18)
             return 1;
-        if (untilCall <= 0 && (score > 17 || score < -17))
+        if (untilCall <= 0 && Math.abs(score) > 17 && Math.abs(score) < 24)
             return -1;
         return 0;
 

@@ -85,7 +85,7 @@ public class BettingStage implements GameStage {
         p.hasBet = true;
 
         // For all AI, for now just have them match the bid
-        int newbid = p.makeBet(main.mainPot, currentBid, main.players);
+        int newbid = p.makeBet(main.mainPot, currentBid, main.players, main.isCalled);
         if (newbid == -1) {
             p.folded = true;
             main.addMessage(p.name() + " has folded!");
@@ -224,16 +224,21 @@ public class BettingStage implements GameStage {
     private void endRound() {
         // First, find all the players who bombed out, they will be folded and they pay
         // credits equal to the main pot into the sabacc pot
+
+        // Dont check for bombouts if everyone folded, when a player wins when everyone folds
+        // their score doesnt matter
         main.betweenRounds = true;
-        for (Player p : main.players) {
-            if (!p.folded) {
-                System.out.println(p.name() + " : " + p.score());
-                if (Math.abs(p.score()) > 23) {
-                    int value = Math.min(main.mainPot, p.credits());
-                    p.folded = true;
-                    p.modifyCredits(-value);
-                    main.sabaccPot += value;
-                    main.addMessage(p.name() + " has bombed out!");
+        if (!allFolded()) {
+            for (Player p : main.players) {
+                if (!p.folded) {
+                    System.out.println(p.name() + " : " + p.score());
+                    if (Math.abs(p.score()) > 23) {
+                        int value = Math.min(main.mainPot, p.credits());
+                        p.folded = true;
+                        p.modifyCredits(-value);
+                        main.sabaccPot += value;
+                        main.addMessage(p.name() + " has bombed out!");
+                    }
                 }
             }
         }
@@ -242,9 +247,11 @@ public class BettingStage implements GameStage {
         // Currently does not account for multiple tied winners
         Player winner = null;
         int currentScore = 0;
+        int nonfold = 0;    // Keep track of how many players folded
         for (Player p : main.players) {
             if (p.folded)
                 continue;
+            nonfold++;
             if (winner == null) {
                 winner = p;
                 currentScore = Math.abs(p.score());
@@ -257,8 +264,11 @@ public class BettingStage implements GameStage {
         }
         if (winner == null) {
             main.addMessage("There was no winner this round!");
-        }
-        else if (currentScore == 23 || winner.idiotsArray()) {
+        } else if (nonfold == 1) {
+            main.addMessage(winner.name() + " won " + main.mainPot + " credits as everybody else folded!");
+            winner.modifyCredits(main.mainPot);
+            main.mainPot = 0;
+        } else if (currentScore == 23 || winner.idiotsArray()) {
             main.addMessage(winner.name() + " won " + (main.mainPot + main.sabaccPot) + " credits with a pure sabacc!");
             winner.modifyCredits(main.mainPot + main.sabaccPot);
             main.mainPot = 0;
