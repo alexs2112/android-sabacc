@@ -4,6 +4,8 @@ import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureAtlas;
+import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 
 /**
  * Android implementation of Sabacc
@@ -45,7 +47,11 @@ public class Sabacc extends Game {
 		Gdx.graphics.setContinuousRendering(false);
 		Gdx.graphics.requestRendering();
 
-		this.setScreen(new GameScreen(this, 4, 20));
+		// Load the skin for the ui, to be passed into different screens
+		Skin uiSkin = new Skin();
+		uiSkin.addRegions(new TextureAtlas(Gdx.files.internal("ui.atlas")));
+
+		this.setScreen(new GameScreen(this, 4, 20, uiSkin));
 	}
 
 	@Override

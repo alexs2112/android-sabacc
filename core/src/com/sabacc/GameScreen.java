@@ -89,7 +89,7 @@ public class GameScreen implements Screen {
     final public Skin uiSkin;
     final private Drawable playerbox;
 
-    public GameScreen(final Sabacc game, int numOfOpponents, int ante) {
+    public GameScreen(final Sabacc game, int numOfOpponents, int ante, Skin uiSkin) {
 
         // Set up some preliminary variables that are needed
         this.game = game;
@@ -100,10 +100,9 @@ public class GameScreen implements Screen {
         messages = new Queue<String>();
         betweenRounds = true;
         timer = new SabaccTimer(this);
+        this.uiSkin = uiSkin;
 
-        // Load the skin for the ui and the viewport for the different button stages
-        uiSkin = new Skin();
-        uiSkin.addRegions(new TextureAtlas(Gdx.files.internal("ui.atlas")));
+        // Load the viewport for the different button stages
         viewport = new FitViewport(game.width, game.height, camera);
         playerbox = uiSkin.getDrawable("player-box");
 
