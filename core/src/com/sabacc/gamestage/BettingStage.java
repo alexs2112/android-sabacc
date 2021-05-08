@@ -7,6 +7,7 @@ import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.TextField;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.sabacc.GameScreen;
 import com.sabacc.Player;
@@ -22,7 +23,6 @@ public class BettingStage implements GameStage {
     private final GameScreen main;
     private final FitViewport viewport;
     private Stage checkStage;
-    private Stage betStage;
     private Stage raiseStage;
     private Stage currentStage;
     private int currentBid;
@@ -180,7 +180,7 @@ public class BettingStage implements GameStage {
         if (currentBid == 0)
             main.addMessage(p.name() + " checks");
         else {
-            main.addMessage(p.name() + " matches the bid of " + v + " credits");
+            main.addMessage(p.name() + " matches the bid of " + currentBid + " credits");
             p.modifyCredits(-v);
             p.currentBid += v;
             p.roundbid += v;
@@ -286,7 +286,6 @@ public class BettingStage implements GameStage {
     @Override
     public void dispose() {
         checkStage.dispose();
-        betStage.dispose();
         raiseStage.dispose();
         currentStage.dispose();
     }
@@ -355,11 +354,12 @@ public class BettingStage implements GameStage {
         int y = main.game.height / 2 + 100;
 
         TextField.TextFieldStyle style = new TextField.TextFieldStyle();
-        style.font = main.game.font24;
+        style.font = main.game.font32;
         style.background = main.uiSkin.getDrawable("button1-up");
         style.fontColor = Color.WHITE;
         final TextField field = new TextField("", style);
         field.setPosition(0, y);
+        field.setAlignment(Align.center);
         field.setSize(600,96);
         field.setTextFieldFilter(new TextField.TextFieldFilter.DigitsOnlyFilter());
         field.setTextFieldListener(new TextField.TextFieldListener() {

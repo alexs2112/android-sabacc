@@ -69,7 +69,7 @@ public class GameScreen implements Screen {
     public boolean betweenRounds;
 
     // The timer used to add a delay between ai actions
-    final private SabaccTimer timer;
+    final public SabaccTimer timer;
 
     // The currently selected card, defaults to null
     private Card selected;
@@ -360,7 +360,7 @@ public class GameScreen implements Screen {
      */
     public void dealStartingHand() {
         addMessage("Dealing starting hands!");
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 2; i++) {
             for (Player p : players) {
                 p.addCard(deck.drawCard());
             }
@@ -394,34 +394,6 @@ public class GameScreen implements Screen {
         drawingStage.dispose();
         nextRoundStage.dispose();
         uiSkin.dispose();
-    }
-}
-
-class SabaccTimer {
-    public boolean started;
-    final private GameScreen screen;
-    private Timer.Task task;
-
-    public SabaccTimer(GameScreen s) {
-        screen = s;
-        started = false;
-    }
-
-    /**
-     * Will wait a specified time, after which ended will be set as true
-     * @param delay the number of seconds to wait for
-     */
-    public void call(float delay) {
-        started = true;
-        task = new Timer.Task() {
-            @Override
-            public void run() {
-                started = false;
-                if (screen.currentStage != null)
-                    screen.currentStage.aiAction();
-            }
-        };
-        Timer.instance().scheduleTask(task, delay);
     }
 }
 

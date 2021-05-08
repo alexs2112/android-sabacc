@@ -62,6 +62,8 @@ Sabacc Shifts have also not been implemented.
 
 The AI sucks, there is a simple exploit where one can bet more than each AI is willing to pay to force them to fold every round and slowly drain them of credits through the ante.
 
+Opponents are sort of capped based on your screen dimensions. I will be fixing this in the future with general UI updates to let you scroll through up to 7 opponents (more will be able to be enabled through the settings) along with toggling them to view their cards and stuff like that. Also generating names.
+
 The only game breaking bug I have encountered as of now is that when the game falls to a low number of players (due to players dropping after being unable to afford the ante) and the human player folds, the game gets stuck waiting for the AI to take their turn. Not really sure why this is happening but makes the game unplayable to a conclusion.
 
 The font I am currently using (AnakinMono) does not have a negative sign, so your hand value might look a little strange. Working on fixing that as it is annoying, but does not affect gameplay.
