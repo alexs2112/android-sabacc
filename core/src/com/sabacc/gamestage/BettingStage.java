@@ -8,7 +8,9 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.TextField;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.Align;
+import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.sabacc.Card;
 import com.sabacc.GameScreen;
 import com.sabacc.Player;
 
@@ -26,6 +28,9 @@ public class BettingStage implements GameStage {
     private Stage raiseStage;
     private Stage currentStage;
     private int currentBid;
+    final private Array<Array<Player>> handValues;
+    private Array<Player> suddenDemise;
+    private Player winner;
 
     public BettingStage(GameScreen main, FitViewport viewport) {
         this.main = main;
@@ -36,6 +41,11 @@ public class BettingStage implements GameStage {
         buttonStyle.font = main.game.font32;
         buttonStyle.up = main.uiSkin.getDrawable("button3-up");
         buttonStyle.down = main.uiSkin.getDrawable("button3-down");
+
+        // Keep track of all hand values, and the vector of players for each hand value
+        handValues = new Array<Array<Player>>();
+        for (int i = 0; i <= 24; i++)
+            handValues.add(new Array<Player>());
 
         initializeCheckStage(buttonStyle);
         initializeRaiseStage(buttonStyle);
@@ -174,6 +184,7 @@ public class BettingStage implements GameStage {
             p.folded = true;
             main.nextPlayer();
             main.addMessage(p.name() + " has folded!");
+            tryToEndRound();
             return;
         }
 
@@ -187,6 +198,7 @@ public class BettingStage implements GameStage {
             main.mainPot += v;
         }
         main.nextPlayer();
+        tryToEndRound();
     }
 
     /**
@@ -195,6 +207,8 @@ public class BettingStage implements GameStage {
      * @param newbid the value of the new current bid that the player is trying
      */
     private void playerRaise(Player player,  int newbid) {
+        if (!main.getCurrentPlayer().isHuman)
+            return;
         int v = newbid - player.currentBid;
         if (newbid < currentBid) {
             main.addMessage("Error: You cannot raise to lesser value");
@@ -225,13 +239,11 @@ public class BettingStage implements GameStage {
         // First, find all the players who bombed out, they will be folded and they pay
         // credits equal to the main pot into the sabacc pot
 
-        // Dont check for bombouts if everyone folded, when a player wins when everyone folds
-        // their score doesnt matter
+        // @todo You should be able to be bombed out, but still win if all opponents folded
         main.betweenRounds = true;
         if (!allFolded()) {
             for (Player p : main.players) {
                 if (!p.folded) {
-                    System.out.println(p.name() + " : " + p.score());
                     if (Math.abs(p.score()) > 23) {
                         int value = Math.min(main.mainPot, p.credits());
                         p.folded = true;
@@ -243,44 +255,153 @@ public class BettingStage implements GameStage {
             }
         }
 
+        int nonfold = sortAllHandValues();
+
+        if (nonfold == 0)
+            // Base case, no winners, everybody bombed out or folded
+            main.addMessage("There was no winner this round!");
+        else if (nonfold == 1) {
+            // Everybody else folded, the one remaining player wins but cannot win on Pure Sabacc (or Bomb Out)
+            for (Player p : main.players)
+                if (!p.folded) {
+                    winner = p;         // THIS IS LAZY, FIX LATER
+                    break;
+                }
+            main.addMessage(winner.name() + " won " + main.mainPot + " credits as everybody else folded!");
+            winner.modifyCredits(main.mainPot);
+            main.mainPot = 0;
+        } else {
+            // Otherwise, find the highest hand value, 24 is an idiot's array, 0 cannot happen
+            int i;
+            for (i = 24; i >= 0; i--) {
+                if (i == 0)     // Base Case
+                    main.addMessage("There was no winner this round!");
+                else if (handValues.get(i).size == 1) {
+                    // Exactly one winner
+                    winner = handValues.get(i).get(0);
+                    if (i >= 23) {
+                        // Pure Sabacc or Idiot's Array
+                        main.addMessage(winner.name() + " won " + (main.mainPot + main.sabaccPot) + " credits with a pure sabacc!");
+                        winner.modifyCredits(main.mainPot + main.sabaccPot);
+                        main.mainPot = 0;
+                        main.sabaccPot = 0;
+                        break;
+                    } else {
+                        // Otherwise, regular hand
+                        main.addMessage(winner.name() + " won " + main.mainPot + " credits with a hand of " + i + "!");
+                        winner.modifyCredits(main.mainPot);
+                        main.mainPot = 0;
+                        break;
+                    }
+                } else if (handValues.get(i).size > 1){
+                    // Multiple winners, enact Sudden Demise
+                    // @todo Will not enact a second sudden demise if that comes up
+                    main.addMessage("Multiple players with a hand of " + i + ", enacting Sudden Demise!");
+                    suddenDemise = handValues.get(i);
+                    Card c;
+                    winner = null;
+                    String s;
+                    int newValue = -1;
+                    for (Player p : suddenDemise) {
+                        c = main.deck.drawCard();
+                        p.addCard(c);
+                        s = p.name() + " is dealt " + c.name;   // Done this way to set the entire message on one line, to fit on the screen
+                        if (Math.abs(p.score()) > 23 || p.score() == 0) {
+                            s += " and bombs out with " + p.score() + "!"; // Maybe add a note that penalties are not paid in sudden demise?
+                        } else if (Math.abs(p.score()) > newValue) {
+                            newValue = Math.abs(p.score());
+                            winner = p;
+                        }
+                        main.addMessage(s);
+                    }
+
+                    // If all players in the sudden demise bomb out, then continue the for loop
+                    // to find the next highest hand value
+                    if (winner == null)
+                        continue;
+
+                    // Otherwise, the winner wins, code copied from above
+                    if (i >= 23) {
+                        // Pure Sabacc or Idiot's Array still wins the sabacc pot despite the extra card from sudden demise
+                        main.addMessage(winner.name() + " won " + (main.mainPot + main.sabaccPot) + " credits with a pure sabacc!");
+                        winner.modifyCredits(main.mainPot + main.sabaccPot);
+                        main.mainPot = 0;
+                        main.sabaccPot = 0;
+                        break;
+                    } else {
+                        // Otherwise, regular hand
+                        main.addMessage(winner.name() + " won " + main.mainPot + " credits with a hand of " + i + "!");
+                        winner.modifyCredits(main.mainPot);
+                        main.mainPot = 0;
+                        break;
+                    }
+                }
+            }
+
+        }
+
+        // After allocating credits, ask the player to start the next round
+        main.setGameStage(main.nextRoundStage);
+    }
+
+    /**
+     * Iterate over each player and figure out the array of highest hands
+     * @return the integer value of how many players have not folded
+     */
+    /*
+    private int getAllTopHands() {
         // Then iterate over each non-folded player and compare them to the winner
-        // Currently does not account for multiple tied winners
-        Player winner = null;
-        int currentScore = 0;
+        highestHands.clear();
+        int score = -1;
         int nonfold = 0;    // Keep track of how many players folded
         for (Player p : main.players) {
             if (p.folded)
                 continue;
             nonfold++;
-            if (winner == null) {
-                winner = p;
-                currentScore = Math.abs(p.score());
+            if (highestHands.isEmpty()) {
+                highestHands.add(p);
+                score = Math.abs(p.score());
             } else {
-                if (Math.abs(p.score()) > currentScore || p.idiotsArray()) {
-                    winner = p;
-                    currentScore = Math.abs(p.score());
+                if (Math.abs(p.score()) > score) {
+                    highestHands.clear();
+                    highestHands.add(p);
+                    score = Math.abs(p.score());
+                } else if (p.idiotsArray()) {
+                    // @todo Handle idiots arrays somehow
+                } else if (Math.abs(p.score()) == score) {
+                    highestHands.add(p);
                 }
             }
         }
-        if (winner == null) {
-            main.addMessage("There was no winner this round!");
-        } else if (nonfold == 1) {
-            main.addMessage(winner.name() + " won " + main.mainPot + " credits as everybody else folded!");
-            winner.modifyCredits(main.mainPot);
-            main.mainPot = 0;
-        } else if (currentScore == 23 || winner.idiotsArray()) {
-            main.addMessage(winner.name() + " won " + (main.mainPot + main.sabaccPot) + " credits with a pure sabacc!");
-            winner.modifyCredits(main.mainPot + main.sabaccPot);
-            main.mainPot = 0;
-            main.sabaccPot = 0;
-        } else {
-            main.addMessage(winner.name() + " won " + main.mainPot + " credits with a hand of " + currentScore + "!");
-            winner.modifyCredits(main.mainPot);
-            main.mainPot = 0;
-        }
+        return nonfold;
+    }*/
 
-        // After allocating credits, ask the player to start the next round
-        main.setGameStage(main.nextRoundStage);
+    /**
+     * Iterate over each player, if they are not folded then add them to the index corresponding to
+     * their score
+     * @return an integer value of how many players did not fold
+     */
+    private int sortAllHandValues() {
+        clearHandValues();
+        int nonfold = 0;    // Keep track of how many players folded
+        for (Player p : main.players) {
+            if (p.folded)
+                continue;
+            nonfold++;
+            if (p.idiotsArray())
+                handValues.get(24).add(p);
+            else
+                handValues.get(Math.abs(p.score())).add(p);
+        }
+        return nonfold;
+    }
+
+    /**
+     * Iterate over the 2d array of hand values and clear each inner array
+     */
+    private void clearHandValues() {
+        for (Array<Player> a : handValues)
+            a.clear();
     }
 
     @Override

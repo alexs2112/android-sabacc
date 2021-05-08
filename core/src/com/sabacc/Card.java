@@ -3,7 +3,7 @@ package com.sabacc;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 
 public class Card {
-    public enum Suite {
+    public enum Suit {
         Face,
         Sabers,
         Flasks,
@@ -12,11 +12,11 @@ public class Card {
     }
     final public String name;
     final public int value;
-    final public Suite suite;
+    final public Suit suit;
     final public Drawable image;
-    public Card(String name, Suite suite, int value, Drawable image) {
+    public Card(String name, Suit suit, int value, Drawable image) {
         this.name = name;
-        this.suite = suite;
+        this.suit = suit;
         this.value = value;
         this.image = image;
     }

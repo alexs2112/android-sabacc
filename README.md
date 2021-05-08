@@ -54,16 +54,20 @@ In the event that multiple players have the same winning hand, a Sudden Demise i
 
 At any point after a drawing or betting round, a Sabacc shift may happen. This random event redistributes the values of all cards in each players hand. The only way to prevent this is to place a card into the Interference Field at any time during their turn. The tradeoff of cards in the field being unable to be shifted is that the value is known to all other players.
 
-**Known Bugs**
+**Unimplemented Features**
 
-As of now, the Sudden Demise has not been implemented and the win goes to the firstmost player in order (which will always be the player).
+As of now, Sudden Demise only happens exactly once per "hand value". So if a Sudden Demise happens and there are multiple players with the same score, the first one will get the win. This seems exceedingly unlikely in practice.
 
 Sabacc Shifts have also not been implemented.
 
-The AI sucks, there is a simple exploit where one can bet more than each AI is willing to pay to force them to fold every round and slowly drain them of credits through the ante.
+The AI sucks, there is a simple exploit where one can bet more than each AI is willing to pay to force them to fold every round and slowly drain them of credits through the ante. This can also happen to the player if they bet more than you have and force you to fold. Implementing going all in like poker will be done soon
 
 Opponents are sort of capped based on your screen dimensions. I will be fixing this in the future with general UI updates to let you scroll through up to 7 opponents (more will be able to be enabled through the settings) along with toggling them to view their cards and stuff like that. Also generating names.
 
-The only game breaking bug I have encountered as of now is that when the game falls to a low number of players (due to players dropping after being unable to afford the ante) and the human player folds, the game gets stuck waiting for the AI to take their turn. Not really sure why this is happening but makes the game unplayable to a conclusion.
+**Known Bugs**
+
+The only game breaking bugs I have encountered as of now is that when the game falls to a low number of players (due to players dropping after being unable to afford the ante) and the human player folds, the game gets stuck waiting for the AI to take their turn. Not really sure why this is happening but makes the game unplayable to a conclusion.
+
+Sometimes if there are a few computer players remaining they will get stuck in a loop of checking and standing, and nobody will call. This will be fixed in the future when I fix the rest of the AI, which I think will fix the other bug too
 
 The font I am currently using (AnakinMono) does not have a negative sign, so your hand value might look a little strange. Working on fixing that as it is annoying, but does not affect gameplay.

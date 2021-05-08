@@ -184,8 +184,10 @@ public class GameScreen implements Screen {
         // Then draw each opponents box under the messages
         drawPlayerBoxes(game.height - 100 - game.maxMessages*20 - 96);
 
-        // Show the current stage on top of everything
-        currentStage.show();
+        // Show the current stage on top of everything when it is the players turn
+        // @todo this is a bit lazy to check the current stage here
+        if (getCurrentPlayer().isHuman || currentStage == nextRoundStage)
+            currentStage.show();
 
         game.batch.end();
 

@@ -58,8 +58,8 @@ public class Deck {
      *   - Idiot (0)                        idiot
      */
     private void generateDeck() {
-        for (Card.Suite s : Card.Suite.values()) {
-            if (s == Card.Suite.Face) {
+        for (Card.Suit s : Card.Suit.values()) {
+            if (s == Card.Suit.Face) {
                 for (int i = 0; i < 2; i++) {
                     allCards.add(new Card("The Star", s, -17, cardSkin.getDrawable("star")));
                     allCards.add(new Card("The Evil One", s, -15, cardSkin.getDrawable("evilone")));
