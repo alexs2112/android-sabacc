@@ -53,7 +53,7 @@ public class BettingStage implements GameStage {
     public void start() {
         // As the current bid starts at 0, set the start stage to the checking stage
         currentStage = checkStage;
-        Gdx.input.setInputProcessor(currentStage);
+        main.setStageInput(currentStage);
 
         // Reset the current bid of the round
         currentBid = 0;
@@ -212,7 +212,7 @@ public class BettingStage implements GameStage {
         main.addMessage(player.name() + " raises the current bid to " + currentBid);
 
         currentStage = checkStage;
-        Gdx.input.setInputProcessor(currentStage);
+        main.setStageInput(currentStage);
         main.nextPlayer();
         tryToEndRound();
     }
@@ -319,7 +319,7 @@ public class BettingStage implements GameStage {
             @Override
             public void clicked(InputEvent e, float x, float y) {
                 currentStage = raiseStage;
-                Gdx.input.setInputProcessor(currentStage);
+                main.setStageInput(currentStage);
             }
         });
 
@@ -396,7 +396,7 @@ public class BettingStage implements GameStage {
             @Override
             public void clicked(InputEvent e, float x, float y) {
                 currentStage = checkStage;
-                Gdx.input.setInputProcessor(currentStage);
+                main.setStageInput(currentStage);
             }
         });
         raiseStage.addActor(cancelButton);

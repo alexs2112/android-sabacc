@@ -36,15 +36,12 @@ public class Player {
     public void refreshScore() { score = 0; }
 
     /**
-     * A function to simply add a card to the players hand
-     * Will not add if the player has 5 cards, due to screen size restraints
-     * Fix this later
+     * A function to simply add a card to the players hand and add its value
+     * @param c the card to add
      */
     public void addCard(Card c) {
-        if (numCards() < 5) {
-            score += c.value;
-            hand.add(c);
-        }
+        score += c.value;
+        hand.add(c);
     }
 
     // Some variables for each game round

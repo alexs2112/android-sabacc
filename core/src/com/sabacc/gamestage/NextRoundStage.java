@@ -48,8 +48,7 @@ public class NextRoundStage implements GameStage {
 
     @Override
     public void start() {
-        Gdx.input.setInputProcessor(stage);
-
+        main.setStageInput(stage);
     }
 
     @Override

@@ -1,9 +1,11 @@
 package com.sabacc;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.InputAdapter;
+import com.badlogic.gdx.InputMultiplexer;
+import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
@@ -75,6 +77,10 @@ public class GameScreen implements Screen {
     // Keep track of the current stage, either for the betting round or the drawing round
     final private FitViewport viewport;
 
+    // The input multiplexer that holds standard input (such as selecting cards in hand) and input relevant to the current stage
+    final public InputMultiplexer input;
+    public InputAdapter baseInput;
+
     // A set of gamestages that are swapped between
     public DrawingStage drawingStage;
     public BettingStage bettingStage;
@@ -85,12 +91,27 @@ public class GameScreen implements Screen {
         currentStage.start();
     }
 
+    /**
+     * Sets the current input processor and removes all previous ones that are not the base input
+     * @param next the next input processor to be set to
+     */
+    public void setStageInput(InputProcessor next) {
+        // Remove all previous stage based input processors past the base input stage
+        for (int i = 1; i < input.size(); i++) {
+            input.removeProcessor(i);
+        }
+        input.addProcessor(next);
+    }
+
     // The skin for different buttons
     final public Skin uiSkin;
     final private Drawable playerbox;
 
-    public GameScreen(final Sabacc game, int numOfOpponents, int ante, Skin uiSkin) {
+    // The starting x coordinate of where to draw the player's hand, to enable scrolling
+    // This is likely to be negative at all times, it cannot be above 0
+    private int startOfHand;
 
+    public GameScreen(final Sabacc game, int numOfOpponents, int ante, Skin uiSkin) {
         // Set up some preliminary variables that are needed
         this.game = game;
         deck = new Deck();
@@ -101,6 +122,10 @@ public class GameScreen implements Screen {
         betweenRounds = true;
         timer = new SabaccTimer(this);
         this.uiSkin = uiSkin;
+
+        // Initializes the base input stage to handle hand actions
+        input = new InputMultiplexer();
+        initializeBaseInput();
 
         // Load the viewport for the different button stages
         viewport = new FitViewport(game.width, game.height, camera);
@@ -164,20 +189,6 @@ public class GameScreen implements Screen {
 
         game.batch.end();
 
-        // Take player input to determine if they selected a card in their hand
-        // Apparently this works even with non-continuous rendering, thought I might have to change it to an input listener
-        if (Gdx.input.justTouched()) {
-            selected = null;
-            Vector3 touch = new Vector3();
-            touch.set(Gdx.input.getX(), Gdx.input.getY(), 0);
-            camera.unproject(touch);
-            if (touch.y > 124 && touch.y < 124 + 172) {
-                int i = (int)(touch.x / 120);
-                if (i < player.numCards())
-                    selected = player.hand().get(i);
-            }
-        }
-
         // Start a short delay timer for the next ai player
         if (!getCurrentPlayer().isHuman)
             if (!timer.started)
@@ -185,17 +196,73 @@ public class GameScreen implements Screen {
     }
 
     /**
+     * Set up the base input adapter to deal with viewing cards and scrolling
+     */
+    private void initializeBaseInput() {
+        baseInput = new InputAdapter() {
+            @Override
+            public boolean touchDown(int x, int y, int pointer, int button) {
+                selected = null;
+                Vector3 touch = new Vector3();
+                touch.set(x, y, 0);
+                camera.unproject(touch);
+                if (touch.y > 124 && touch.y < 124 + 172) {
+                    int i = (int)((touch.x + startOfHand) / 120);
+                    if (i < player.numCards()) {
+                        selected = player.hand().get(i);
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            private int startX = -1;
+            private int leftmost;
+            @Override
+            public boolean touchDragged(int screenX, int screenY, int pointer) {
+                if (startX == -1) {
+                    if (screenY * game.ratioHeight > game.height - 124 || screenY * game.ratioHeight < game.height - (124 + 172))
+                        return false;
+                    startX = screenX;
+                }
+
+                // Make sure that the hand remains in bounds
+                leftmost = Math.max(0, (player.numCards() - 5) * 120);
+                startOfHand += (int)((startX - screenX) * game.ratioWidth);
+                if (startOfHand > leftmost)
+                    startOfHand = leftmost;
+                else if (startOfHand < 0)
+                    startOfHand = 0;
+                System.out.println(startOfHand);
+
+                startX = screenX;
+                return false;
+            }
+
+            @Override
+            public boolean touchUp(int screenX, int screenY, int pointer, int button) {
+                startX = -1;
+                return false;
+            }
+        };
+
+        input.addProcessor(baseInput);
+        Gdx.input.setInputProcessor(input);
+    }
+
+    /**
      * Simply draw the cards in the players hand, immediately above the hand write the players
      * current score
+     * @todo add some little arrows or something if there are cards off screen to remind the player they can scroll
      */
     private void displayHand() {
         for (int i = 0; i < player.hand().size; i++) {
             Card c = player.hand().get(i);
-            c.image.draw(game.batch, i * 120, 128, 120, 172);
+            c.image.draw(game.batch, i * 120 - startOfHand, 128, 120, 172);
 
             // If the card is selected by the player, draw the selected border over it
             if (c == selected)
-                deck.selected().draw(game.batch, i * 120, 128, 120, 172);
+                deck.selected().draw(game.batch, i * 120 - startOfHand, 128, 120, 172);
         }
         if (player.numCards() > 0)
             game.font24.draw(game.batch, "Value: " + player.score(), 16, 332);
@@ -293,7 +360,7 @@ public class GameScreen implements Screen {
      */
     public void dealStartingHand() {
         addMessage("Dealing starting hands!");
-        for (int i = 0; i < 2; i++) {
+        for (int i = 0; i < 5; i++) {
             for (Player p : players) {
                 p.addCard(deck.drawCard());
             }

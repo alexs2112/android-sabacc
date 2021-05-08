@@ -21,6 +21,7 @@ public class Deck {
     // The current deck
     private Array<Card> cards;
     public Array<Card> cards() { return cards; }
+    public boolean isEmpty() { return cards.size == 0; }
 
     /**
      * Constructor, sets up the array of cards and generates the deck

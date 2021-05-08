@@ -23,6 +23,14 @@ public class Sabacc extends Game {
 	public int width;
 	public int height;
 
+	// Width and height of the physical screen
+	public int screenWidth;
+	public int screenHeight;
+
+	// Ratio comparing the width and height of the camera screen to the physical screen
+	public float ratioWidth;
+	public float ratioHeight;
+
 	// Some extra settings
 	public int maxMessages;
 	public float aiTurnLength;
@@ -36,8 +44,13 @@ public class Sabacc extends Game {
 
 		// Calculate the camera dimensions
 		// Width is constant, height is relative to width based on screen size
+		screenWidth = Gdx.graphics.getWidth();
+		screenHeight = Gdx.graphics.getHeight();
 		width = 600;
-		height = (int)(((double)Gdx.graphics.getHeight() / (double) Gdx.graphics.getWidth())*width);
+		height = (int)(((double) screenHeight / (double) screenWidth)*width);
+		ratioWidth = (float)width / (float)screenWidth;
+		ratioHeight = (float)height / (float)screenHeight;
+		System.out.println("Ratio\tWidth:" + ratioWidth + "\tHeight:" + ratioHeight);
 
 		// Set some extra settings
 		maxMessages = 8;

@@ -48,6 +48,9 @@ public class DrawingStage implements GameStage {
      * @param p player
      */
     private void drawCard(Player p) {
+        // @todo Make this more elegant later
+        if (main.deck.isEmpty())
+            main.addMessage("ERROR: " + p.name() + " tries to draw but the deck is empty");
         p.addCard(main.deck.drawCard());
         main.addMessage(p.name() + " draws a card");
     }
@@ -62,7 +65,7 @@ public class DrawingStage implements GameStage {
             currentStage = buildStage;
         else
             currentStage = callStage;
-        Gdx.input.setInputProcessor(currentStage);
+        main.setStageInput(currentStage);
 
         // Decrement how many rounds until a player can call
         untilCall--;

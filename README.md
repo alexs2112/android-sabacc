@@ -4,7 +4,7 @@ Simple android implementation of Sabacc from Star Wars, using the libGDX framewo
 
 Rules taken and implemented from http://sabacc.sourceforge.net/rules
 
-Very early alpha, not really in a playable state.
+Very early alpha, not really in a playable state. To load to build the APK and test on your device, open the build.gradle file in Android Studio.
 
 **Deck Configuration**
 
@@ -60,8 +60,8 @@ As of now, the Sudden Demise has not been implemented and the win goes to the fi
 
 Sabacc Shifts have also not been implemented.
 
-As of now, players hands are capped at 5 cards.
-
 The AI sucks, there is a simple exploit where one can bet more than each AI is willing to pay to force them to fold every round and slowly drain them of credits through the ante.
 
 The only game breaking bug I have encountered as of now is that when the game falls to a low number of players (due to players dropping after being unable to afford the ante) and the human player folds, the game gets stuck waiting for the AI to take their turn. Not really sure why this is happening but makes the game unplayable to a conclusion.
+
+The font I am currently using (AnakinMono) does not have a negative sign, so your hand value might look a little strange. Working on fixing that as it is annoying, but does not affect gameplay.
