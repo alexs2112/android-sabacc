@@ -50,6 +50,10 @@ public class Player {
     public boolean folded;
     public boolean hasDrawn; // Not necessarily drawn a card, has gone in the drawing round
 
+    // Some values if the player has gone all in or not
+    public boolean isAllIn;
+    public int allInValue;
+
     public Player(boolean isPlayer, String name, int credits) {
         this.isHuman = isPlayer;
         this.name = name;
@@ -86,15 +90,18 @@ public class Player {
      * @param mainPot the current value of the main pot
      * @param bid the current bid of the hand
      * @param players the array of players in the game
-     * @return -1 if the player folds, an integer of how much the new current bid is
+     * @return -1 if the player folds, -2 if the player goes all in, or an integer of how much this player will bet
      */
     public int makeBet(int mainPot, int bid, Array<Player> players, boolean isCalled) {
         // For now, make it extremely simple
-        // Folding Conditions:
-        //  - If the player cannot afford to call the bid
-        //  - If the current bid is greater than this players max bid
+        // Folding Conditions: (-1)
+        //  - If the player cannot afford to call the bid and their hand is bad
+        //  - If the current bid is greater than this players max bid and they do not have a pure sabacc
         //  - If this player has all 5 cards in hand but a hand value less than 14
         //  - If the hand value is bombed out, then fold
+        // All in Conditions: (-2)
+        //  - If the player cannot afford to call the bid and their hand is good
+        //  - @todo If the player has less than 2x the ante credits, for now just set at 40 so would have to drop otherwise
         // Raising Conditions:
         //  - If the player has a hand > 17, raise by minbid
         //  - If the player has a pure sabacc, raise by double minbid
@@ -102,9 +109,19 @@ public class Player {
         // Otherwise, just call
         int aScore = Math.abs(score);
 
-        // If they cannot afford to call, then fold
-        if (bid - currentBid > credits)
-            return -1;
+        // If they have or will have less than 40 credits, always go all in as they will have to drop if they fold
+        if (bid - currentBid > 0 && credits - (bid - currentBid) < 40)
+            return -2;
+
+        // If they cannot afford to call:
+        if (bid - currentBid > credits) {
+            // If their hand is bad, fold
+            if (aScore < 20)
+                return -1;
+            // If their hand is good, go all in
+            else
+                return -2;
+        }
         // If the current bid is greater than the max bid and you do not have a pure sabacc, fold
         if (bid > maxbid * mainPot && aScore != 23)
             return -1;
@@ -117,31 +134,28 @@ public class Player {
 
         // If they have a pure sabacc, raise the bid by double minbid
         if (aScore == 23 && bid < 2*minbid * credits && roundbid < 2*maxbid * credits)
-            return bid + (int)(credits * 2 * minbid);
+            return bid - currentBid + (int)(credits * 2 * minbid);
 
         // If they have a good hand, raise the bid by minbid
         if (aScore > 17 && bid < minbid * credits && roundbid < maxbid * credits)
-            return bid + (int)(credits * minbid);
+            return bid - currentBid + (int)(credits * minbid);
 
         // Otherwise, match the bid
-        return bid;
+        return bid - currentBid;
     }
 
     /**
      * A method that decides if this player should call, stand, or draw in the drawing round
+     * Very simple for now, keep drawing until their hand value is 18-23, then call
      * @param untilCall how many rounds left until the round can be called
      * @return -1 if this player calls, 0 if they stand, 1 if they draw
      */
     public int drawChoice(int untilCall) {
-        if (numCards() == 5 && untilCall <= 0)
-            return -1;
-        if (numCards() == 5)
-            return 0;
-        if (score < 16 && score > 0)
-            return 1;
-        if (score < 0 && score > -18)
+        if (Math.abs(score) < 18 || (Math.abs(score) > 24 && Math.abs(score) < 40))
             return 1;
         if (untilCall <= 0 && Math.abs(score) > 17 && Math.abs(score) < 24)
+            return -1;
+        if (untilCall <= 0 && Math.random() < 0.2) // Randomly call 20% of the time if able, to prevent random loops
             return -1;
         return 0;
 
