@@ -34,6 +34,8 @@ public class Sabacc extends Game {
 	// Some extra settings
 	public int maxMessages;
 	public float aiTurnLength;
+	public int startingCredits;
+	public int ante;
 	
 	@Override
 	public void create () {
@@ -55,6 +57,8 @@ public class Sabacc extends Game {
 		// Set some extra settings
 		maxMessages = 8;
 		aiTurnLength = 0.3f;
+		startingCredits = 500;
+		ante = 20;
 
 		// Make the graphics non-continuous, to save battery
 		Gdx.graphics.setContinuousRendering(false);
@@ -64,7 +68,7 @@ public class Sabacc extends Game {
 		Skin uiSkin = new Skin();
 		uiSkin.addRegions(new TextureAtlas(Gdx.files.internal("ui.atlas")));
 
-		this.setScreen(new GameScreen(this, 4, 20, uiSkin));
+		this.setScreen(new GameScreen(this, 4, uiSkin));
 	}
 
 	@Override

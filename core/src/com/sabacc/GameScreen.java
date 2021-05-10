@@ -12,7 +12,6 @@ import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Queue;
 import com.badlogic.gdx.utils.ScreenUtils;
-import com.badlogic.gdx.utils.Timer;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.sabacc.gamestage.*;
 
@@ -51,9 +50,6 @@ public class GameScreen implements Screen {
             messages.removeFirst();
     }
 
-    // The buy in price for each game
-    final private int ante;
-
     // The two pots
     public int mainPot;
     public int sabaccPot;
@@ -76,9 +72,6 @@ public class GameScreen implements Screen {
 
     // A drawable that displays nothing, but is less ugly than nothing
     public Drawable noButton;
-
-    // Keep track of the current stage, either for the betting round or the drawing round
-    final private FitViewport viewport;
 
     // The input multiplexer that holds standard input (such as selecting cards in hand) and input relevant to the current stage
     final public InputMultiplexer input;
@@ -114,13 +107,12 @@ public class GameScreen implements Screen {
     // This is likely to be negative at all times, it cannot be above 0
     private int startOfHand;
 
-    public GameScreen(final Sabacc game, int numOfOpponents, int ante, Skin uiSkin) {
+    public GameScreen(final Sabacc game, int numOfOpponents, Skin uiSkin) {
         // Set up some preliminary variables that are needed
         this.game = game;
         deck = new Deck();
         camera = new OrthographicCamera();
         camera.setToOrtho(false, game.width, game.height);
-        this.ante = ante;
         messages = new Queue<String>();
         betweenRounds = true;
         timer = new SabaccTimer(this);
@@ -132,16 +124,17 @@ public class GameScreen implements Screen {
         initializeBaseInput();
 
         // Load the viewport for the different button stages
-        viewport = new FitViewport(game.width, game.height, camera);
+        // Keep track of the current stage, either for the betting round or the drawing round
+        FitViewport viewport = new FitViewport(game.width, game.height, camera);
         playerbox = uiSkin.getDrawable("player-box");
 
         // Set up all players
         players = new Array<Player>();
-        player = new Player(true, "Alex", 100);
+        player = new Player(true, "Alex", game.startingCredits);
         players.add(player);
         Player p;
         for (int i = 0; i < numOfOpponents; i++) {
-            p = new Player(false, "Opponent " + i, 80 + (int)(Math.random()*40));
+            p = new Player(false, "Opponent " + i, game.startingCredits);
             p.setBidRange(0.2f, 0.6f);
             players.add(p);
         }
@@ -286,9 +279,12 @@ public class GameScreen implements Screen {
      */
     private void drawPlayerBoxes(int sy) {
         int y = 0;
-        for (int i = 1; i < players.size; i++) {
+        Player p;
+        for (int i = 0; i < players.size; i++) {
+            p = players.get(i);
+            if (p.isHuman)
+                continue;
             y = sy - 96*(i-1) + 84;
-            Player p = players.get(i);
             playerbox.draw(game.batch, 0, sy - 96*(i-1), 600, 96);
 
             game.font24.draw(game.batch, p.name(), 12, y);
@@ -324,7 +320,7 @@ public class GameScreen implements Screen {
         // Start by refreshing the deck and clearing each players hand
         messages.clear();
         addMessage("Starting new round!");
-        addMessage("Ante is " + ante);
+        addMessage("Ante is " + game.ante);
         betweenRounds = false;
         deck.refreshDeck();
         for (Player p : players) {
@@ -337,7 +333,7 @@ public class GameScreen implements Screen {
         // Trying to fix a crash that happens when a bunch of players bomb out
         int max = players.size;
         for (int i = 0; i < max; i++) {
-            if (players.get(i).credits() >= ante * 2)
+            if (players.get(i).credits() >= game.ante * 2)
                 continue;
             addMessage(players.get(i).name() + " drops from the game!");
             players.removeIndex(i);
@@ -348,10 +344,10 @@ public class GameScreen implements Screen {
         // For now, automatically ante each player
         for (Player p : players) {
             p.folded = false;
-            p.modifyCredits(-(ante*2));
+            p.modifyCredits(-(game.ante*2));
         }
-        mainPot += ante * players.size;
-        sabaccPot += ante * players.size;
+        mainPot += game.ante * players.size;
+        sabaccPot += game.ante * players.size;
 
         // Notify the game that this is a new round, to deal a hand after the first betting round
         startOfRound = true;

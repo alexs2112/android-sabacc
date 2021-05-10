@@ -60,25 +60,13 @@ As of now, Sudden Demise only happens exactly once per "hand value". So if a Sud
 
 Sabacc Shifts have also not been implemented.
 
-The AI sucks, there is a simple exploit where one can bet more than each AI is willing to pay to force them to fold every round and slowly drain them of credits through the ante. This can also happen to the player if they bet more than you have and force you to fold. Implementing going all in like poker will be done soon
-
 Opponents are sort of capped based on your screen dimensions. I will be fixing this in the future with general UI updates to let you scroll through up to 7 opponents (more will be able to be enabled through the settings) along with toggling them to view their cards and stuff like that. Also generating names.
 
 **Known Bugs**
 
-The only game breaking bugs I have encountered as of now is that when the game falls to a low number of players (due to players dropping after being unable to afford the ante) and the human player folds, the game gets stuck waiting for the AI to take their turn. Not really sure why this is happening but makes the game unplayable to a conclusion.
-
-Sometimes if there are a few computer players remaining they will get stuck in a loop of checking and standing, and nobody will call. This will be fixed in the future when I fix the rest of the AI, which I think will fix the other bug too
-
 The font I am currently using (AnakinMono) does not have a negative sign, so your hand value might look a little strange. Working on fixing that as it is annoying, but does not affect gameplay.
 
 **Current Roadmap**
-
- - Implement going all in, the game is mostly unplayable in its current state as once a player gets ahead they likely dominate the rest of the game. Possibly store a variable in each player of "AllInValue" that keeps track of the maximum number of chips that player can win when they go all in. Remaining chips will stay in the main pot for the next round rather than go to the next player.
-
-    - This likely involves redoing the code for the entire betting stage, it kind of sucks right now
-
- - Make the AI a bit better so the game doesn't get stuck in loops. Still won't be great, but will be better than it is currently.
 
  - A general UI update. Opponents will be dropdown boxes. The main section displays Player Name, Credits, Number of Cards, and Known Value (when the Interference Field is implemented). When you click an opponent, it will open a box that displays their cards (or cardbacks if you don't know them). At the end of a round, each player is opened and their cards displayed. Also enable scrolling through opponents to have up to 7, and scrolling through the list of messages.
 
@@ -87,7 +75,7 @@ The font I am currently using (AnakinMono) does not have a negative sign, so you
 **Stuff that can be done at any time**
  (In no particular order)
 
- - AI Updates
+ - AI Updates (always)
 
  - Different message colours
 

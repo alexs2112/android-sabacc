@@ -84,6 +84,7 @@ public class BettingStage implements GameStage {
      * Print out the current bid of the round, how many credits each player has, and if they are all in then what their all in value is
      */
     private void printPlayers() {
+        System.out.println("Main Pot: " + main.mainPot + "\tSabacc Pot: " + main.sabaccPot);
         System.out.println("Round Current Bid: " + currentBid);
         String s;
         for (Player p : main.players) {
@@ -212,8 +213,8 @@ public class BettingStage implements GameStage {
      * @param p the player to go all in
      */
     private void playerAllIn(Player p) {
-        // First check to see if the player can just raise to all their credits, rather than go all in
-        if (p.credits() + p.currentBid > currentBid) {
+        // First check to see if the player can just raise or match to all their credits, rather than go all in
+        if (p.credits() + p.currentBid >= currentBid) {
             playerBet(p, p.credits());
             return;
         }

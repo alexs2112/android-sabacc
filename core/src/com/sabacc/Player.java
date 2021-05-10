@@ -146,14 +146,16 @@ public class Player {
 
     /**
      * A method that decides if this player should call, stand, or draw in the drawing round
-     * Very simple for now, keep drawing until their hand value is 18+, then call
+     * Very simple for now, keep drawing until their hand value is 18-23, then call
      * @param untilCall how many rounds left until the round can be called
      * @return -1 if this player calls, 0 if they stand, 1 if they draw
      */
     public int drawChoice(int untilCall) {
-        if (Math.abs(score) < 18)
+        if (Math.abs(score) < 18 || (Math.abs(score) > 24 && Math.abs(score) < 40))
             return 1;
         if (untilCall <= 0 && Math.abs(score) > 17 && Math.abs(score) < 24)
+            return -1;
+        if (untilCall <= 0 && Math.random() < 0.2) // Randomly call 20% of the time if able, to prevent random loops
             return -1;
         return 0;
 
