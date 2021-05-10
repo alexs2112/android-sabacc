@@ -1,8 +1,10 @@
 package com.sabacc.gamestage;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Button;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.TextField;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
@@ -13,7 +15,14 @@ import com.sabacc.Card;
 import com.sabacc.GameScreen;
 import com.sabacc.Player;
 
-public class BettingStage implements GameStage {
+/**
+ * Set up the three buttons for the betting round
+ * They are:
+ *  - Bet (call the current bid)
+ *  - Raise (raise the current bid)
+ *  - Fold (drop out of the round)
+ */
+public class BettingStage2 implements GameStage {
     private final GameScreen main;
     private final FitViewport viewport;
     private Stage checkStage;
@@ -21,11 +30,12 @@ public class BettingStage implements GameStage {
     private Stage currentStage;
     private int currentBid;
     final private Array<Array<Player>> handValues;
+    private Array<Player> suddenDemise;
     private final Array<Player> allInPlayers;
     private int roundStartPot;      // How much the main pot is at the start of the round
     private Player winner;
 
-    public BettingStage(GameScreen main, FitViewport viewport) {
+    public BettingStage2(GameScreen main, FitViewport viewport) {
         this.main = main;
         this.viewport = viewport;
 
@@ -74,26 +84,6 @@ public class BettingStage implements GameStage {
             p.currentBid = 0;
             p.hasBet = false;
         }
-
-        // Debugging
-        printPlayers();
-    }
-
-    /**
-     * FOR DEBUGGING
-     * Print out the current bid of the round, how many credits each player has, and if they are all in then what their all in value is
-     */
-    private void printPlayers() {
-        System.out.println("Round Current Bid: " + currentBid);
-        String s;
-        for (Player p : main.players) {
-            s = p.name() + " : " + p.credits();
-            if (p.folded)
-                s += " : Folded!";
-            else if (p.isAllIn)
-                s += " : All In! Value of " + p.allInValue;
-            System.out.println(s);
-        }
     }
 
     /**
@@ -109,7 +99,8 @@ public class BettingStage implements GameStage {
     }
 
     /**
-     * Handle an AI turn, based on their specific AI choice
+     * Run the next few AI players until the current player is a human player, or until the current
+     * player has already matched the current bid, in which case the betting round ends
      */
     @Override
     public void aiAction() {
@@ -121,142 +112,45 @@ public class BettingStage implements GameStage {
         if (p.isAllIn) {
             // A lazy solution, but if this player is all in then dont have them do anything
             main.addMessage(p.name() + " is all in");
-        } else {
-            // Otherwise, get the AI action
-            int bet = p.makeBet(main.mainPot, currentBid, main.players, main.isCalled);
-
-            if (bet == -1) {
-                // Fold
-                p.folded = true;
-                main.addMessage(p.name() + " has folded!");
-            } else if (bet == -2) {
-                playerAllIn(p);
-            } else {
-                playerBet(p, bet);
-            }
-        }
-        main.nextPlayer();
-        tryToEndRound();
-    }
-
-    /**
-     * Have the input player increase their current bet by the amount
-     * @param p the player to bet
-     * @param amount how much they bet
-     */
-    private void playerBet(Player p, int amount) {
-        String s;
-
-        if (amount < 0)
-            main.addMessage("ERROR: " + p.name() + " is trying to bet a negative value of " + amount);
-
-        // Increment the players current bid by the amount, then check to see if it was a raise
-        p.currentBid += amount;
-        p.modifyCredits(-amount);
-        p.roundbid += amount;
-        main.mainPot += amount;
-        portionCreditsToAllIn(p);
-
-        if (p.currentBid > currentBid) {
-            currentBid = p.currentBid;
-            s = p.name() + " bets " + amount + " raising to " + currentBid;
-        } else if (p.currentBid == currentBid) {
-            if (p.currentBid == 0)
-                s = p.name() + " checks";
-            else
-                s = p.name() + " matches the bid of " + currentBid + " with " + amount;
-        } else
-            s = "ERROR: " + p.name() + " currentBid < stage currentBid [" + p.currentBid + " < " + currentBid + "]";
-        main.addMessage(s);
-    }
-
-    /**
-     * Have the player match the current bid, going all in if they cannot afford it
-     * @param p the player to check
-     */
-    private void humanCheck(Player p) {
-        // If they cannot afford to match, then go all in
-        if (p.currentBid + p.credits() < currentBid)
-            playerAllIn(p);
-        // Otherwise, match the current bid
-        else {
-            int c = currentBid - p.currentBid;
-            playerBet(p, c);
-        }
-
-        // Then move to the next player
-        main.nextPlayer();
-        tryToEndRound();
-    }
-
-    /**
-     * Have the input player raise their current bid by the input value
-     * @param p the player to raise
-     * @param value the value they raise by
-     */
-    private void humanRaise(Player p, int value) {
-        if (value > p.credits())
-            main.addMessage("Error: Cannot raise with more credits than you have!");
-        else if (p.currentBid + value < currentBid)
-            main.addMessage("Error: Cannot raise to a value below the current bid!");
-        else {
-            // If successful, make the bet and move to the next player
-            playerBet(p, value);
             main.nextPlayer();
             tryToEndRound();
-        }
-    }
-
-    /**
-     * Handle going all in for the specified player.
-     * @param p the player to go all in
-     */
-    private void playerAllIn(Player p) {
-        // First check to see if the player can just raise to all their credits, rather than go all in
-        if (p.credits() + p.currentBid > currentBid) {
-            playerBet(p, p.credits());
             return;
         }
+        // Get the AIs action
+        int newbid = p.makeBet(main.mainPot, currentBid, main.players, main.isCalled);
+        if (newbid == -1) {
+            p.folded = true;
+            main.addMessage(p.name() + " has folded!");
+        } else if (newbid == -2) {
+            goAllIn(p);
+        } else {
+            if (newbid > currentBid)
+                main.addMessage(p.name() + " raises to " + newbid + " credits");
+            else if (newbid == currentBid) {
+                if (newbid == 0)
+                    main.addMessage(p.name() + " checks");
+                else
+                    main.addMessage(p.name() + " matches the bid of " + newbid + " credits");
+            } else if (newbid < -2) {
+                main.addMessage("ERROR: " + p.name() + " betting a negative less than neg2 (" + newbid + ")");
+            } else
+                main.addMessage("ERROR: " + p.name() + " bets " + newbid + " credits");
 
-        // Start by betting all of this players credits the same way as in playerBet
-        p.currentBid += p.credits();
-        p.roundbid += p.credits();
-        p.hasBet = true;
-        main.mainPot += p.credits();
-        allInPlayers.add(p);
+            // Set the new currentBid
+            currentBid = newbid;
 
-        // Print a message
-        main.addMessage(p.name() + " has gone all in with their remaining " + p.credits() + " credits!");
-
-        // The first time the player goes all in for the round, set their starting all in value and toggle them to all in
-        if (!p.isAllIn) {
-            p.allInValue = roundStartPot;
-            p.isAllIn = true;
+            // Get the value of how much the player owes
+            newbid -= p.currentBid;
+            if (newbid < 0)
+                System.out.println("ERROR: NEGATIVE RAISE");
+            p.modifyCredits(-newbid);
+            p.currentBid += newbid;
+            p.roundbid += newbid;
+            main.mainPot += newbid;
+            portionCreditsToAllIn(p);
         }
-        p.modifyCredits(-p.credits());
-        portionCreditsToAllIn(p);
-
-        // Then for each other non-folded player, increase this players allInValue by a portion
-        // of that players current bid. This handles all players that have previously bet in the
-        // round, portionCreditsToAllIn handles all future players who bet in the round
-
-        for (Player o : main.players) {
-            if (o == p)
-                continue;
-            p.allInValue += Math.min(o.currentBid, p.currentBid);
-        }
-    }
-
-    /**
-     * Iterate over the list of all in players and add credits to their all in value equal to their
-     * currentBid whenever another player bets
-     * @param c the current player who is allocating credits to the all in players
-     */
-    private void portionCreditsToAllIn(Player c) {
-        for (Player p : allInPlayers) {
-            // @todo Fix this later, does not work properly if c has already allocated an amount to p's allInValue
-            p.allInValue += p.currentBid;
-        }
+        main.nextPlayer();
+        tryToEndRound();
     }
 
     /**
@@ -306,6 +200,120 @@ public class BettingStage implements GameStage {
     }
 
     /**
+     * A function that calls the input player to match the current bid if they can afford
+     * it, otherwise they go all in
+     * @param p the player to call the current bid
+     */
+    private void matchCurrentBid(Player p) {
+        int v = currentBid - p.currentBid;
+        if (v > p.credits()) {
+            goAllIn(p);
+            portionCreditsToAllIn(p);
+            main.nextPlayer();
+            tryToEndRound();
+            return;
+        }
+
+        if (currentBid == 0)
+            main.addMessage(p.name() + " checks");
+        else {
+            main.addMessage(p.name() + " matches the bid of " + currentBid + " credits");
+            p.modifyCredits(-v);
+            p.currentBid += v;
+            p.roundbid += v;
+            main.mainPot += v;
+            portionCreditsToAllIn(p);
+        }
+        main.nextPlayer();
+        tryToEndRound();
+    }
+
+    /**
+     * Raise the current bid to a new value denoted by value, and then bet enough to bring
+     * player.currentBid to the new currentBid
+     * @param newbid the value of the new current bid that the player is trying
+     */
+    private void playerRaise(Player player,  int newbid) {
+        if (!main.getCurrentPlayer().isHuman)
+            return;
+        int v = newbid - player.currentBid;
+        if (newbid < currentBid) {
+            main.addMessage("Error: You cannot raise to lesser value");
+            return;
+        } else if (v > player.credits()) {
+            main.addMessage("Error: You cannot raise to more credits than you have");
+            return;
+        }
+        currentBid = newbid;
+        player.modifyCredits(-v);
+        player.currentBid += v;
+        player.roundbid += v;
+        player.hasBet = true;
+        main.mainPot += v;
+        portionCreditsToAllIn(player);
+        main.addMessage(player.name() + " raises the current bid to " + currentBid);
+
+        currentStage = checkStage;
+        main.setStageInput(currentStage);
+        main.nextPlayer();
+        tryToEndRound();
+    }
+
+    /**
+     * Iterate over the list of all in players and add credits to their all in value equal to their
+     * currentBid whenever another player bets
+     * @param c the current player who is allocating credits to the all in players
+     */
+    private void portionCreditsToAllIn(Player c) {
+        for (Player p : allInPlayers) {
+            // @todo Fix this later, does not work properly if c has already allocated an amount to p's allInValue
+            p.allInValue += p.currentBid;
+
+            // Debugging messages
+            System.out.println(p.name() + " All In Value: " + p.allInValue);
+        }
+    }
+
+    /**
+     * Handle going all in for the specified player.
+     * @param p the player to go all in
+     */
+    private void goAllIn(Player p) {
+        // Toggle all the necessary variables and set the players bid to their current credits
+        if (p.credits() + p.currentBid > currentBid)
+            currentBid = p.credits() + p.currentBid;   // @todo Going all in with a raise breaks it a bit if nobody raises again later, handled for now in Player.java
+        p.currentBid += p.credits();
+        p.roundbid += p.credits();
+        p.hasBet = true;
+        main.mainPot += p.credits();
+        allInPlayers.add(p);
+
+        // The first time the player goes all in for the round, set their starting all in value and toggle them to all in
+        if (!p.isAllIn) {
+            p.allInValue = roundStartPot;
+            p.isAllIn = true;
+        }
+        p.modifyCredits(-p.credits());
+        portionCreditsToAllIn(p);
+
+        // Then for each other non-folded player, increase this players allInValue by a portion
+        // of that players current bid. This handles all players that have previously bet in the
+        // round, portionCreditsToAllIn handles all future players who bet in the round
+
+        for (Player o : main.players) {
+            if (o == p)
+                continue;
+            p.allInValue += Math.min(o.currentBid, p.currentBid);
+        }
+
+        // Print a message
+        main.addMessage(p.name() + " has gone all in!");
+
+        // Debugging messages
+        System.out.println(p.name() + " All In Value: " + p.allInValue);
+    }
+
+    /**
      * End the round and determine the winner. This happens after a final betting round
      * once the game has been called
      */
@@ -313,12 +321,10 @@ public class BettingStage implements GameStage {
         // First, find all the players who bombed out, they will be folded and they pay
         // credits equal to the main pot into the sabacc pot
         main.betweenRounds = true;
-
-        // A check to account for if only one player is still in the hand, but bombed out
-        if (!allFolded()) {
+        if (!allFolded()) { // A check to account for if only one player is still in the hand, but bombed out
             for (Player p : main.players) {
                 if (!p.folded) {
-                    if (Math.abs(p.score()) > 23 || p.score() == 0) {
+                    if (Math.abs(p.score()) > 23) {
                         int value = Math.min(main.mainPot, p.credits());
                         p.folded = true;
                         p.modifyCredits(-value);
@@ -334,7 +340,6 @@ public class BettingStage implements GameStage {
         if (nonfold == 0)
             // Base case, no winners, everybody bombed out or folded
             main.addMessage("There was no winner this round!");
-
         else if (nonfold == 1) {
             // Everybody else folded, the one remaining player wins but cannot win on Pure Sabacc (or Bomb Out)
             for (Player p : main.players)
@@ -369,18 +374,19 @@ public class BettingStage implements GameStage {
                         winner.modifyCredits(value + main.sabaccPot);
                         main.mainPot = main.mainPot - value;
                         main.sabaccPot = 0;
+                        break;
                     } else {
                         // Otherwise, regular hand
                         main.addMessage(winner.name() + " won " + value + " credits with a hand of " + i + "!");
                         winner.modifyCredits(value);
                         main.mainPot = main.mainPot - value;
+                        break;
                     }
-                    break;
                 } else if (handValues.get(i).size > 1){
                     // Multiple winners, enact Sudden Demise
                     // @todo Will not enact a second sudden demise if that comes up
                     main.addMessage("Multiple players with a hand of " + i + ", enacting Sudden Demise!");
-                    Array<Player> suddenDemise = handValues.get(i);
+                    suddenDemise = handValues.get(i);
                     Card c;
                     winner = null;
                     String s;
@@ -414,13 +420,14 @@ public class BettingStage implements GameStage {
                         winner.modifyCredits(value + main.sabaccPot);
                         main.mainPot = main.mainPot - value;
                         main.sabaccPot = 0;
+                        break;
                     } else {
                         // Otherwise, regular hand
                         main.addMessage(winner.name() + " won " + value + " credits with a hand of " + i + "!");
                         winner.modifyCredits(value);
                         main.mainPot = main.mainPot - value;
+                        break;
                     }
-                    break;
                 }
             }
 
@@ -479,7 +486,7 @@ public class BettingStage implements GameStage {
                 Player p = main.getCurrentPlayer();
                 if (p.isHuman) {
                     p.hasBet = true;
-                    humanCheck(p);
+                    matchCurrentBid(p);
                 }
             }
         });
@@ -544,8 +551,9 @@ public class BettingStage implements GameStage {
         field.setTextFieldListener(new TextField.TextFieldListener() {
             @Override
             public void keyTyped(TextField textField, char c) {
+                System.out.print(field.getText());
                 if (c == '\n')
-                    humanRaise(main.player, Integer.parseInt(field.getText()));
+                    playerRaise(main.player, Integer.parseInt(field.getText()));
             }
         });
         raiseStage.addActor(field);
@@ -560,7 +568,7 @@ public class BettingStage implements GameStage {
         acceptButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent e, float x, float y) {
-                humanRaise(main.player, Integer.parseInt(field.getText()));
+                playerRaise(main.player, Integer.parseInt(field.getText()));
             }
         });
         raiseStage.addActor(acceptButton);

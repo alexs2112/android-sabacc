@@ -90,7 +90,7 @@ public class Player {
      * @param mainPot the current value of the main pot
      * @param bid the current bid of the hand
      * @param players the array of players in the game
-     * @return -1 if the player folds, -2 if the player goes all in, or an integer of how much the new current bid is
+     * @return -1 if the player folds, -2 if the player goes all in, or an integer of how much this player will bet
      */
     public int makeBet(int mainPot, int bid, Array<Player> players, boolean isCalled) {
         // For now, make it extremely simple
@@ -110,13 +110,8 @@ public class Player {
         int aScore = Math.abs(score);
 
         // If they have or will have less than 40 credits, always go all in as they will have to drop if they fold
-        if ((bid - currentBid > 0 && credits > 0) && credits - (bid - currentBid) < 40) {
-            // Either go all in if they cannot afford it, or raise to this players credits
-            if (bid - currentBid > credits)
-                return -2;
-            else
-                return credits;
-        }
+        if (bid - currentBid > 0 && credits - (bid - currentBid) < 40)
+            return -2;
 
         // If they cannot afford to call:
         if (bid - currentBid > credits) {
@@ -139,14 +134,14 @@ public class Player {
 
         // If they have a pure sabacc, raise the bid by double minbid
         if (aScore == 23 && bid < 2*minbid * credits && roundbid < 2*maxbid * credits)
-            return bid + (int)(credits * 2 * minbid);
+            return bid - currentBid + (int)(credits * 2 * minbid);
 
         // If they have a good hand, raise the bid by minbid
         if (aScore > 17 && bid < minbid * credits && roundbid < maxbid * credits)
-            return bid + (int)(credits * minbid);
+            return bid - currentBid + (int)(credits * minbid);
 
         // Otherwise, match the bid
-        return bid;
+        return bid - currentBid;
     }
 
     /**
