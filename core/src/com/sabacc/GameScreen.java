@@ -74,6 +74,9 @@ public class GameScreen implements Screen {
     // The currently selected card, defaults to null
     private Card selected;
 
+    // A drawable that displays nothing, but is less ugly than nothing
+    public Drawable noButton;
+
     // Keep track of the current stage, either for the betting round or the drawing round
     final private FitViewport viewport;
 
@@ -122,6 +125,7 @@ public class GameScreen implements Screen {
         betweenRounds = true;
         timer = new SabaccTimer(this);
         this.uiSkin = uiSkin;
+        noButton = uiSkin.getDrawable("button1-up");
 
         // Initializes the base input stage to handle hand actions
         input = new InputMultiplexer();
@@ -133,11 +137,11 @@ public class GameScreen implements Screen {
 
         // Set up all players
         players = new Array<Player>();
-        player = new Player(true, "Alex", 500);
+        player = new Player(true, "Alex", 100);
         players.add(player);
         Player p;
         for (int i = 0; i < numOfOpponents; i++) {
-            p = new Player(false, "Opponent " + i, 500);
+            p = new Player(false, "Opponent " + i, 80 + (int)(Math.random()*40));
             p.setBidRange(0.2f, 0.6f);
             players.add(p);
         }
@@ -188,6 +192,8 @@ public class GameScreen implements Screen {
         // @todo this is a bit lazy to check the current stage here
         if (getCurrentPlayer().isHuman || currentStage == nextRoundStage)
             currentStage.show();
+        else
+            noButton.draw(game.batch, 0,0,600,128);
 
         game.batch.end();
 

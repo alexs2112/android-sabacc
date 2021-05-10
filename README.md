@@ -71,3 +71,32 @@ The only game breaking bugs I have encountered as of now is that when the game f
 Sometimes if there are a few computer players remaining they will get stuck in a loop of checking and standing, and nobody will call. This will be fixed in the future when I fix the rest of the AI, which I think will fix the other bug too
 
 The font I am currently using (AnakinMono) does not have a negative sign, so your hand value might look a little strange. Working on fixing that as it is annoying, but does not affect gameplay.
+
+**Current Roadmap**
+
+ - Implement going all in, the game is mostly unplayable in its current state as once a player gets ahead they likely dominate the rest of the game. Possibly store a variable in each player of "AllInValue" that keeps track of the maximum number of chips that player can win when they go all in. Remaining chips will stay in the main pot for the next round rather than go to the next player.
+
+    - This likely involves redoing the code for the entire betting stage, it kind of sucks right now
+
+ - Make the AI a bit better so the game doesn't get stuck in loops. Still won't be great, but will be better than it is currently.
+
+ - A general UI update. Opponents will be dropdown boxes. The main section displays Player Name, Credits, Number of Cards, and Known Value (when the Interference Field is implemented). When you click an opponent, it will open a box that displays their cards (or cardbacks if you don't know them). At the end of a round, each player is opened and their cards displayed. Also enable scrolling through opponents to have up to 7, and scrolling through the list of messages.
+
+ - Implement the Sabacc Shift and the Interference Field. A player can place cards into the field by clicking a card and then clicking the field. Opponent's interference cards have a blue border and are displayed underneath their hand (so clicking their tab will have multiple rows of cards).
+
+**Stuff that can be done at any time**
+ (In no particular order)
+
+ - AI Updates
+
+ - Different message colours
+
+ - A main menu and settings screen
+
+ - Add a delay between dealing cards when enacting Sudden Demise
+
+ - Player profiles, to save and load your profile and have different games. Can add new AI's that play differently and have higher stakes tables with steeper buy in prices and antes.
+
+ - Clicking an opponents card tells you what card it is, probably to be done in the UI update. This might be moderately difficult.
+
+ - Clean up the code for both Betting and Drawing, probably using State Machines
