@@ -122,6 +122,11 @@ public class Player {
             else
                 return -2;
         }
+
+        // Fold if there is a bid and this hand sucks
+        if (bid - maxbid > 0 && aScore < 17)
+            return -1;
+
         // If the current bid is greater than the max bid and you do not have a pure sabacc, fold
         if (bid > maxbid * mainPot && aScore != 23)
             return -1;

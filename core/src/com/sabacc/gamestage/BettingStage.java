@@ -76,7 +76,7 @@ public class BettingStage implements GameStage {
         }
 
         // Debugging
-        printPlayers();
+        //printPlayers();
     }
 
     /**
@@ -196,6 +196,8 @@ public class BettingStage implements GameStage {
      * @param value the value they raise by
      */
     private void humanRaise(Player p, int value) {
+        currentStage = checkStage;
+        main.setStageInput(currentStage);
         if (value > p.credits())
             main.addMessage("Error: Cannot raise with more credits than you have!");
         else if (p.currentBid + value < currentBid)
@@ -515,6 +517,7 @@ public class BettingStage implements GameStage {
                     main.addMessage(p.name() + " has folded!");
                     p.folded = true;
                     main.nextPlayer();
+                    tryToEndRound();
                 }
             }
         });

@@ -280,6 +280,7 @@ public class GameScreen implements Screen {
     private void drawPlayerBoxes(int sy) {
         int y = 0;
         Player p;
+        // @todo when the human player drops out, the opponents are drawn too high up
         for (int i = 0; i < players.size; i++) {
             p = players.get(i);
             if (p.isHuman)
