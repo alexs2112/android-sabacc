@@ -1,75 +1,96 @@
 
 ui.png
-size: 2048, 256
+size: 2048, 512
 format: RGBA8888
 filter: Nearest, Nearest
 repeat: none
 button1-down
   rotate: false
-  xy: 0, 0
+  xy: 0, 224
   size: 600, 128
   orig: 600, 128
   offset: 0, 0
   index: -1
 button1-up
   rotate: false
-  xy: 0, 128
+  xy: 0, 352
   size: 600, 128
   orig: 600, 128
   offset: 0, 0
   index: -1
 button2-down
   rotate: false
-  xy: 600, 32
+  xy: 0, 0
   size: 300, 128
   orig: 300, 128
   offset: 0, 0
   index: -1
 button2-up
   rotate: false
-  xy: 900, 32
+  xy: 600, 160
   size: 300, 128
   orig: 300, 128
   offset: 0, 0
   index: -1
 button3-down
   rotate: false
-  xy: 1200, 0
+  xy: 900, 160
   size: 200, 128
   orig: 200, 128
   offset: 0, 0
   index: -1
 button3-unavailable
   rotate: false
-  xy: 1200, 128
+  xy: 300, 0
   size: 200, 128
   orig: 200, 128
   offset: 0, 0
   index: -1
 button3-up
   rotate: false
-  xy: 1400, 128
+  xy: 1100, 160
   size: 200, 128
   orig: 200, 128
   offset: 0, 0
   index: -1
 player-box
   rotate: false
-  xy: 600, 160
+  xy: 600, 288
+  size: 600, 96
+  orig: 600, 96
+  offset: 0, 0
+  index: -1
+player-button-checked
+  rotate: false
+  xy: 600, 384
+  size: 600, 96
+  orig: 600, 96
+  offset: 0, 0
+  index: -1
+player-button-down
+  rotate: false
+  xy: 0, 128
+  size: 600, 96
+  orig: 600, 96
+  offset: 0, 0
+  index: -1
+player-button-up
+  rotate: false
+  xy: 1200, 384
   size: 600, 96
   orig: 600, 96
   offset: 0, 0
   index: -1
 small-button3-down
   rotate: false
-  xy: 1600, 160
+  xy: 1800, 384
   size: 200, 96
   orig: 200, 96
   offset: 0, 0
   index: -1
 small-button3-up
   rotate: false
-  xy: 1400, 32
+  xy: 1200, 288
   size: 200, 96
   orig: 200, 96
   offset: 0, 0

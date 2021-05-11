@@ -1,6 +1,7 @@
 package com.sabacc;
 
 import com.badlogic.gdx.utils.Array;
+import com.sabacc.gamestage.PlayerButton;
 
 public class Player {
     // A player has to have a name
@@ -34,6 +35,11 @@ public class Player {
     private int score;
     public int score() { return score; }
     public void refreshScore() { score = 0; }
+
+    // Some other player bools that can be toggled
+    public boolean displayHand;    // If the score and hand should be displayed between rounds
+    public PlayerButton button;
+    public void updateButton() { if (button != null) button.update(); }
 
     /**
      * A function to simply add a card to the players hand and add its value
@@ -107,6 +113,7 @@ public class Player {
         //  - If the player has a pure sabacc, raise by double minbid
         //  - If the player would bid and the current bid or their round bid is already > those values, just call
         // Otherwise, just call
+        /*
         int aScore = Math.abs(score);
 
         // If they have or will have less than 40 credits, always go all in as they will have to drop if they fold
@@ -144,7 +151,7 @@ public class Player {
         // If they have a good hand, raise the bid by minbid
         if (aScore > 17 && bid < minbid * credits && roundbid < maxbid * credits)
             return bid - currentBid + (int)(credits * minbid);
-
+*/
         // Otherwise, match the bid
         return bid - currentBid;
     }
@@ -156,6 +163,8 @@ public class Player {
      * @return -1 if this player calls, 0 if they stand, 1 if they draw
      */
     public int drawChoice(int untilCall) {
+        return 1;
+        /*
         if (Math.abs(score) < 18 || (Math.abs(score) > 24 && Math.abs(score) < 40))
             return 1;
         if (untilCall <= 0 && Math.abs(score) > 17 && Math.abs(score) < 24)
@@ -163,6 +172,6 @@ public class Player {
         if (untilCall <= 0 && Math.random() < 0.2) // Randomly call 20% of the time if able, to prevent random loops
             return -1;
         return 0;
-
+*/
     }
 }

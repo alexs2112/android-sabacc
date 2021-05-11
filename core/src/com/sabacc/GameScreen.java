@@ -7,7 +7,11 @@ import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Queue;
@@ -33,6 +37,7 @@ public class GameScreen implements Screen {
         return players.get(currentPlayer);
     }
     public void nextPlayer() {
+        players.get(currentPlayer).updateButton(); // Update this players button
         currentPlayer = (currentPlayer + 1) % players.size;
         while (players.get(currentPlayer).folded)
             currentPlayer = (currentPlayer + 1) % players.size;
@@ -61,23 +66,28 @@ public class GameScreen implements Screen {
     // If the round has been called
     public boolean isCalled;
 
-    // Between rounds, to display opponents hands (if any) and their hand values
-    public boolean betweenRounds;
-
     // The timer used to add a delay between ai actions
     final public SabaccTimer timer;
 
     // The currently selected card, defaults to null
     private Card selected;
+    final private int smallCardHeight;
+    final private int smallCardWidth;
+    final private int smallCardNum;     // how many small cards fit on the screen per row at once
+    private int startOfOpponents;       // The y coordinate of where opponent buttons start, from the top down
 
     // A drawable that displays nothing, but is less ugly than nothing
     public Drawable noButton;
 
     // The input multiplexer that holds standard input (such as selecting cards in hand) and input relevant to the current stage
     final public InputMultiplexer input;
-    public InputAdapter baseInput;
+    private InputAdapter baseInput;
+    private Stage baseStage;
+    private Array<PlayerButton> playerButtons;
+
 
     // A set of gamestages that are swapped between
+    final private FitViewport viewport;
     public DrawingStage drawingStage;
     public BettingStage bettingStage;
     public NextRoundStage nextRoundStage;
@@ -92,8 +102,8 @@ public class GameScreen implements Screen {
      * @param next the next input processor to be set to
      */
     public void setStageInput(InputProcessor next) {
-        // Remove all previous stage based input processors past the base input stage
-        for (int i = 1; i < input.size(); i++) {
+        // Remove all previous stage based input processors past the base input adapter and the base Stage
+        for (int i = 2; i < input.size(); i++) {
             input.removeProcessor(i);
         }
         input.addProcessor(next);
@@ -114,19 +124,19 @@ public class GameScreen implements Screen {
         camera = new OrthographicCamera();
         camera.setToOrtho(false, game.width, game.height);
         messages = new Queue<String>();
-        betweenRounds = true;
         timer = new SabaccTimer(this);
         this.uiSkin = uiSkin;
         noButton = uiSkin.getDrawable("button1-up");
 
-        // Initializes the base input stage to handle hand actions
-        input = new InputMultiplexer();
-        initializeBaseInput();
-
         // Load the viewport for the different button stages
         // Keep track of the current stage, either for the betting round or the drawing round
-        FitViewport viewport = new FitViewport(game.width, game.height, camera);
+        viewport = new FitViewport(game.width, game.height, camera);
         playerbox = uiSkin.getDrawable("player-box");
+
+        // Default small card size (for opponents) is 70x96 px
+        smallCardWidth = 70;
+        smallCardHeight = 96;
+        smallCardNum = 600 / smallCardWidth;
 
         // Set up all players
         players = new Array<Player>();
@@ -138,14 +148,35 @@ public class GameScreen implements Screen {
             p.setBidRange(0.2f, 0.6f);
             players.add(p);
         }
+        displayPlayerHands();
 
         // Initialize all game stages
         drawingStage = new DrawingStage(this, viewport);
         bettingStage = new BettingStage(this, viewport);
         nextRoundStage = new NextRoundStage(this, viewport);
 
+        // @todo Initialize the message space
+        startOfOpponents = game.height - 100 - game.maxMessages*20 - 96;
+
+        // Initializes the base input stage to handle hand actions
+        input = new InputMultiplexer();
+        initializeBaseInput();
+
         // Start the game
         setGameStage(nextRoundStage);
+    }
+
+    public void displayPlayerHands() {
+        for (Player p : players) {
+            p.displayHand = true;
+            p.updateButton();
+        }
+    }
+    public void hidePlayerHands() {
+        for (Player p : players) {
+            p.displayHand = false;
+            p.updateButton();
+        }
     }
 
     @Override
@@ -179,7 +210,11 @@ public class GameScreen implements Screen {
             game.msgFont.draw(game.batch, messages.get(i), 16, game.height - 80 - i*20);
 
         // Then draw each opponents box under the messages
-        drawPlayerBoxes(game.height - 100 - game.maxMessages*20 - 96);
+        //drawPlayerBoxes(game.height - 100 - game.maxMessages*20 - 96);
+
+        // Then draw each opponents UI stuff
+        baseStage.draw();
+        drawPlayerHands();
 
         // Show the current stage on top of everything when it is the players turn
         // @todo this is a bit lazy to check the current stage here
@@ -197,9 +232,200 @@ public class GameScreen implements Screen {
     }
 
     /**
+     * Simply draw the cards in the players hand, immediately above the hand write the players
+     * current score
+     * @todo add some little arrows or something if there are cards off screen to remind the player they can scroll
+     */
+    private void displayHand() {
+        for (int i = 0; i < player.hand().size; i++) {
+            Card c = player.hand().get(i);
+            c.image.draw(game.batch, i * 120 - startOfHand, 128, 120, 172);
+
+            // If the card is selected by the player, draw the selected border over it
+            if (c == selected)
+                deck.selected().draw(game.batch, i * 120 - startOfHand, 128, 120, 172);
+        }
+        if (player.numCards() > 0)
+            game.font24.draw(game.batch, "Value: " + player.score(), 16, 332);
+
+        // Write the name of the currently selected card above the players hand value
+        if (selected != null)
+            game.font24.draw(game.batch, selected.name, 16, 356);
+    }
+
+    /**
+     * Draw each players box to contain info about that player under messages
+     * @param sy the starting y coordinate
+     */
+    private void drawPlayerBoxes(int sy) {
+        int y = 0;
+        Player p;
+        // @todo when the human player drops out, the opponents are drawn too high up
+        for (int i = 0; i < players.size; i++) {
+            p = players.get(i);
+            if (p.isHuman)
+                continue;
+            y = sy - 96*(i-1) + 84;
+            playerbox.draw(game.batch, 0, sy - 96*(i-1), 600, 96);
+
+            game.font24.draw(game.batch, p.name(), 12, y);
+            y -= 24;
+            game.font24.draw(game.batch, "C: " + p.credits(), 12, y);
+            y -= 24;
+
+            if (p.displayHand)
+                game.font24.draw(game.batch, "H: " + p.score(), 12, y);
+            else {
+                if (p.folded)
+                    game.font24.draw(game.batch, "H: Folded", 12, y);
+                else
+                    game.font24.draw(game.batch, "H: ?", 12, y);
+            }
+
+            for (int c = 0; c < p.numCards(); c++) {
+                // If game is not over, draw the card back
+                if (!p.displayHand)
+                    deck.cardback().draw(game.batch, 530 - (c*70), sy - 96*(i-1), 70, 96);
+                // Otherwise, draw the card face and the value of that player's hand under C
+                else
+                    p.hand().get(c).image.draw(game.batch, 530 - (c*70), sy - 96*(i-1), 70, 96);
+            }
+        }
+    }
+
+    /**
+     * For each player, if their button is toggled and their cards are shown, show their cards
+     */
+    private void drawPlayerHands() {
+        int y;
+        int sy = startOfOpponents;
+        Player p;
+        for (PlayerButton b : playerButtons) {
+            if (b == null)
+                continue;
+            y = sy;
+            sy -= 96 + 10;
+            y -= smallCardHeight;
+            if (!b.isChecked())
+                continue;
+            p = b.player();
+            for (int i = 0; i < p.hand().size; i++) {
+                if (i % (smallCardNum - 1) == 0) {
+                    playerbox.draw(game.batch, 0, y, 900, smallCardHeight);
+                    sy -= smallCardHeight;
+                }
+
+                if (p.displayHand)
+                    p.hand().get(i).image.draw(game.batch, i * smallCardWidth, y, smallCardWidth, smallCardHeight);
+                else
+                    deck.cardback().draw(game.batch, i * smallCardWidth, y, smallCardWidth, smallCardHeight);
+
+                if (i > 0 && i % (smallCardNum - 1) == 0) {
+                    y -= smallCardHeight;
+                    sy -= smallCardHeight;
+                }
+            }
+            y -= smallCardHeight;
+        }
+    }
+
+    /**
+     * Unfold each player, check to make sure each player can afford to ante the next round
+     * If they cannot, they leave the table
+     */
+    public void startNewRound() {
+        // Start by refreshing the deck and clearing each players hand
+        messages.clear();
+        addMessage("Starting new round!");
+        addMessage("Ante is " + game.ante);
+        hidePlayerHands();
+        deck.refreshDeck();
+        for (Player p : players) {
+            p.refreshScore();
+            p.hand().clear();
+        }
+        drawingStage.resetUntilCall();
+        bettingStage.resetBettingRound();
+
+        // Trying to fix a crash that happens when a bunch of players bomb out
+        for (int i = 0; i < players.size; i++) {
+            if (players.get(i).credits() >= game.ante * 2)
+                continue;
+            addMessage(players.get(i).name() + " drops from the game!");
+
+            // Remove the player and its associated button
+            players.removeIndex(i);
+            playerButtons.removeIndex(i);
+            i--;
+        }
+
+        // For now, automatically ante each player
+        for (Player p : players) {
+            p.folded = false;
+            p.modifyCredits(-(game.ante*2));
+            p.updateButton();
+        }
+        mainPot += game.ante * players.size;
+        sabaccPot += game.ante * players.size;
+
+        // Notify the game that this is a new round, to deal a hand after the first betting round
+        startOfRound = true;
+
+        // Typically 4 pot building rounds before a player can call the hand
+        isCalled = false;
+
+        // Rounds begin with a preliminary betting round
+        setGameStage(bettingStage);
+    }
+
+    /**
+     * Deal the starting hand of 2 cards to each player
+     */
+    public void dealStartingHand() {
+        addMessage("Dealing starting hands!");
+        for (Player p : players) {
+            for (int i = 0; i < 2; i++) {
+                p.addCard(deck.drawCard());
+            }
+            p.updateButton();
+        }
+    }
+
+    @Override
+    public void resize(int width, int height) {
+
+    }
+
+    @Override
+    public void pause() {
+
+    }
+
+    @Override
+    public void resume() {
+
+    }
+
+    @Override
+    public void hide() {
+
+    }
+
+    @Override
+    public void dispose() {
+        currentStage.dispose();
+        bettingStage.dispose();
+        drawingStage.dispose();
+        nextRoundStage.dispose();
+        uiSkin.dispose();
+    }
+
+    /**
      * Set up the base input adapter to deal with viewing cards and scrolling
      */
     private void initializeBaseInput() {
+
+        // Sets up the base input adapter for scrolling and touching cards
         baseInput = new InputAdapter() {
             @Override
             public boolean touchDown(int x, int y, int pointer, int button) {
@@ -247,158 +473,54 @@ public class GameScreen implements Screen {
             }
         };
 
+        // Sets up each player button
+        baseStage = new Stage(viewport);
+        playerButtons = new Array<PlayerButton>();
+        TextButton.TextButtonStyle style = new TextButton.TextButtonStyle();
+        style.font = game.font24;
+        style.up = uiSkin.getDrawable("player-button-up");
+        style.down = uiSkin.getDrawable("player-button-down");
+        style.checked = uiSkin.getDrawable("player-button-checked");
+        for (Player p : players) {
+            if (p.isHuman) {
+                // Humans do not have buttons currently, just set as null in the array to keep things proper when iterating
+                playerButtons.add(null);
+                continue;
+            }
+            PlayerButton button = new PlayerButton(p, style);
+            button.setWidth(600);
+            button.setHeight(96);
+            button.addListener(new ClickListener() {
+                @Override
+                public void clicked(InputEvent e, float x, float y) {
+                    updateButtonPositions();    // After toggling, update positions of each button
+                }
+            });
+            p.button = button;
+            playerButtons.add(button);
+            baseStage.addActor(button);
+        }
+        updateButtonPositions();
         input.addProcessor(baseInput);
+        input.addProcessor(baseStage);
         Gdx.input.setInputProcessor(input);
     }
 
     /**
-     * Simply draw the cards in the players hand, immediately above the hand write the players
-     * current score
-     * @todo add some little arrows or something if there are cards off screen to remind the player they can scroll
+     * Updates the position of each player button based on if previous ones are toggled or not
      */
-    private void displayHand() {
-        for (int i = 0; i < player.hand().size; i++) {
-            Card c = player.hand().get(i);
-            c.image.draw(game.batch, i * 120 - startOfHand, 128, 120, 172);
-
-            // If the card is selected by the player, draw the selected border over it
-            if (c == selected)
-                deck.selected().draw(game.batch, i * 120 - startOfHand, 128, 120, 172);
-        }
-        if (player.numCards() > 0)
-            game.font24.draw(game.batch, "Value: " + player.score(), 16, 332);
-
-        // Write the name of the currently selected card above the players hand value
-        if (selected != null)
-            game.font24.draw(game.batch, selected.name, 16, 356);
-    }
-
-    /**
-     * Draw each players box to contain info about that player under messages
-     * @param sy the starting y coordinate
-     */
-    private void drawPlayerBoxes(int sy) {
-        int y = 0;
-        Player p;
-        // @todo when the human player drops out, the opponents are drawn too high up
-        for (int i = 0; i < players.size; i++) {
-            p = players.get(i);
-            if (p.isHuman)
+    private void updateButtonPositions() {
+        int y = startOfOpponents;
+        for (PlayerButton b : playerButtons) {
+            if (b == null)
                 continue;
-            y = sy - 96*(i-1) + 84;
-            playerbox.draw(game.batch, 0, sy - 96*(i-1), 600, 96);
-
-            game.font24.draw(game.batch, p.name(), 12, y);
-            y -= 24;
-            game.font24.draw(game.batch, "C: " + p.credits(), 12, y);
-            y -= 24;
-
-            if (betweenRounds)
-                game.font24.draw(game.batch, "H: " + p.score(), 12, y);
-            else {
-                if (p.folded)
-                    game.font24.draw(game.batch, "H: Folded", 12, y);
-                else
-                    game.font24.draw(game.batch, "H: ?", 12, y);
-            }
-
-            for (int c = 0; c < p.numCards(); c++) {
-                // If game is not over, draw the card back
-                if (!betweenRounds)
-                    deck.cardback().draw(game.batch, 530 - (c*70), sy - 96*(i-1), 70, 96);
-                // Otherwise, draw the card face and the value of that player's hand under C
-                else
-                    p.hand().get(c).image.draw(game.batch, 530 - (c*70), sy - 96*(i-1), 70, 96);
-            }
+            b.setPosition(0, y);
+            y -= 96 + 10;   // An extra buffer of 10 pixels between buttons
+            if (b.isChecked())
+                if (b.player().numCards() > 0)
+                    y -= smallCardHeight * ((b.player().numCards() / smallCardNum) + 1);
         }
-    }
-
-    /**
-     * Unfold each player, check to make sure each player can afford to ante the next round
-     * If they cannot, they leave the table
-     */
-    public void startNewRound() {
-        // Start by refreshing the deck and clearing each players hand
-        messages.clear();
-        addMessage("Starting new round!");
-        addMessage("Ante is " + game.ante);
-        betweenRounds = false;
-        deck.refreshDeck();
-        for (Player p : players) {
-            p.refreshScore();
-            p.hand().clear();
-        }
-        drawingStage.resetUntilCall();
-        bettingStage.resetBettingRound();
-
-        // Trying to fix a crash that happens when a bunch of players bomb out
-        int max = players.size;
-        for (int i = 0; i < max; i++) {
-            if (players.get(i).credits() >= game.ante * 2)
-                continue;
-            addMessage(players.get(i).name() + " drops from the game!");
-            players.removeIndex(i);
-            i--;
-            max--;
-        }
-
-        // For now, automatically ante each player
-        for (Player p : players) {
-            p.folded = false;
-            p.modifyCredits(-(game.ante*2));
-        }
-        mainPot += game.ante * players.size;
-        sabaccPot += game.ante * players.size;
-
-        // Notify the game that this is a new round, to deal a hand after the first betting round
-        startOfRound = true;
-
-        // Typically 4 pot building rounds before a player can call the hand
-        isCalled = false;
-
-        // Rounds begin with a preliminary betting round
-        setGameStage(bettingStage);
-    }
-
-    /**
-     * Deal the starting hand of 2 cards to each player
-     */
-    public void dealStartingHand() {
-        addMessage("Dealing starting hands!");
-        for (int i = 0; i < 2; i++) {
-            for (Player p : players) {
-                p.addCard(deck.drawCard());
-            }
-        }
-    }
-
-    @Override
-    public void resize(int width, int height) {
-
-    }
-
-    @Override
-    public void pause() {
-
-    }
-
-    @Override
-    public void resume() {
-
-    }
-
-    @Override
-    public void hide() {
-
-    }
-
-    @Override
-    public void dispose() {
-        currentStage.dispose();
-        bettingStage.dispose();
-        drawingStage.dispose();
-        nextRoundStage.dispose();
-        uiSkin.dispose();
+        Gdx.graphics.requestRendering();
     }
 }
 
