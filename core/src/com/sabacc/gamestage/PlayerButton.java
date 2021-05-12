@@ -30,10 +30,10 @@ public class PlayerButton extends Button {
         this.style = style;
 
         // Initialize the labels
-        nameLabel = new Label(player.name(), new Label.LabelStyle(style.font, style.fontColor));
+        nameLabel = new Label(" " + player.name(), new Label.LabelStyle(style.font, style.fontColor));
         nameLabel.setAlignment(Align.left);
         add(nameLabel).expand().fill();
-        statLabel = new Label("C: " + player.credits() + "   H: " + player.numCards() + "   S: ???", new Label.LabelStyle(style.font, style.fontColor));
+        statLabel = new Label("C:" + player.credits() + " H:" + player.numCards() + " S:?? ", new Label.LabelStyle(style.font, style.fontColor));
         statLabel.setAlignment(Align.right);
         add(statLabel).expand().fill();
     }
@@ -68,15 +68,15 @@ public class PlayerButton extends Button {
      * The main important method, this should be called whenever values change, this updates the player text if needed
      */
     public void update() {
-        String s = "C: " + player.credits();
+        String s = "C:" + player.credits();
         if (player.folded)
-            s += "   Folded!";
+            s += " Folded! ";
         else {
-            s += "   H: " + player.numCards();
+            s += " H:" + player.numCards();
             if (player.displayHand)
-                s += "   S: " + player.score();
+                s += " S:" + player.score() + " ";
             else
-                s += "   S: ???";
+                s += " S:?? ";
         }
         statLabel.setText(s);   // This checks if the new string is different before setting it
     }

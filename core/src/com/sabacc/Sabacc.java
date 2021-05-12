@@ -2,6 +2,7 @@ package com.sabacc;
 
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
@@ -36,6 +37,8 @@ public class Sabacc extends Game {
 	public float aiTurnLength;
 	public int startingCredits;
 	public int ante;
+	public Color backgroundColour;
+	public boolean autoDisplayAndHide;	// Automatically open and close opponents at the end and start of rounds
 	
 	@Override
 	public void create () {
@@ -52,13 +55,14 @@ public class Sabacc extends Game {
 		height = (int)(((double) screenHeight / (double) screenWidth)*width);
 		ratioWidth = (float)width / (float)screenWidth;
 		ratioHeight = (float)height / (float)screenHeight;
-		System.out.println("Ratio\tWidth:" + ratioWidth + "\tHeight:" + ratioHeight);
 
 		// Set some extra settings
 		maxMessages = 8;
 		aiTurnLength = 0.3f;
 		startingCredits = 500;
 		ante = 20;
+		backgroundColour = new Color(0,0,0.2f,1);
+		autoDisplayAndHide = true;
 
 		// Make the graphics non-continuous, to save battery
 		Gdx.graphics.setContinuousRendering(false);

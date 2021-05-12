@@ -6,6 +6,8 @@ import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -50,9 +52,7 @@ public class GameScreen implements Screen {
     final private Queue<String> messages;
     public void addMessage(String message) {
         System.out.println(message);
-        messages.addLast(message);
-        while (messages.size > game.maxMessages)
-            messages.removeFirst();
+        messages.addFirst(message);
     }
 
     // The two pots
@@ -74,10 +74,12 @@ public class GameScreen implements Screen {
     final private int smallCardHeight;
     final private int smallCardWidth;
     final private int smallCardNum;     // how many small cards fit on the screen per row at once
-    private int startOfOpponents;       // The y coordinate of where opponent buttons start, from the top down
 
     // A drawable that displays nothing, but is less ugly than nothing
     public Drawable noButton;
+
+    // The background is now a drawable so that I can conceal certain things
+    public Drawable background;
 
     // The input multiplexer that holds standard input (such as selecting cards in hand) and input relevant to the current stage
     final public InputMultiplexer input;
@@ -113,9 +115,19 @@ public class GameScreen implements Screen {
     final public Skin uiSkin;
     final private Drawable playerbox;
 
-    // The starting x coordinate of where to draw the player's hand, to enable scrolling
-    // This is likely to be negative at all times, it cannot be above 0
+    // The starting x coordinate of where to draw the player's hand, to enable horizontal scrolling
     private int startOfHand;
+
+    // The starting y coordinate of each screen area, to enable vertical scrolling
+    private Rectangle menuRect;
+    public Rectangle potRect;            // Public as it is seen by the betting stage
+    private Rectangle messageRect;
+    private Rectangle opponentRect;
+    private Rectangle selectRect;
+    private Rectangle fieldRect;
+    private Rectangle handRect;
+    private Rectangle currentRect;
+
 
     public GameScreen(final Sabacc game, int numOfOpponents, Skin uiSkin) {
         // Set up some preliminary variables that are needed
@@ -127,6 +139,15 @@ public class GameScreen implements Screen {
         timer = new SabaccTimer(this);
         this.uiSkin = uiSkin;
         noButton = uiSkin.getDrawable("button1-up");
+
+        // Initialize where each screen area exists
+        menuRect = new Rectangle(0, game.height - 64, 600, 64);
+        potRect = new Rectangle(0, game.height - 128, 600, 64);
+        messageRect = new Rectangle(0, game.height - 288, 600, 160);
+        opponentRect = new Rectangle(0, 436, 600, game.height - 288 - 436);
+        selectRect = new Rectangle(0, 396, 600, 40);
+        fieldRect = new Rectangle(0, 300, 600, 96);
+        handRect = new Rectangle(0, 128, 600, 172);
 
         // Load the viewport for the different button stages
         // Keep track of the current stage, either for the betting round or the drawing round
@@ -148,35 +169,38 @@ public class GameScreen implements Screen {
             p.setBidRange(0.2f, 0.6f);
             players.add(p);
         }
-        displayPlayerHands();
 
         // Initialize all game stages
         drawingStage = new DrawingStage(this, viewport);
         bettingStage = new BettingStage(this, viewport);
         nextRoundStage = new NextRoundStage(this, viewport);
 
-        // @todo Initialize the message space
-        startOfOpponents = game.height - 100 - game.maxMessages*20 - 96;
-
         // Initializes the base input stage to handle hand actions
         input = new InputMultiplexer();
         initializeBaseInput();
 
         // Start the game
+        displayPlayerHands();
         setGameStage(nextRoundStage);
     }
 
     public void displayPlayerHands() {
         for (Player p : players) {
             p.displayHand = true;
+            if (!p.folded && game.autoDisplayAndHide && p.button != null)
+                p.button.setChecked(true);
             p.updateButton();
         }
+        updateButtonPositions();
     }
     public void hidePlayerHands() {
         for (Player p : players) {
             p.displayHand = false;
+            if (game.autoDisplayAndHide && p.button != null)
+                p.button.setChecked(false);
             p.updateButton();
         }
+        updateButtonPositions();
     }
 
     @Override
@@ -186,8 +210,8 @@ public class GameScreen implements Screen {
 
     @Override
     public void render(float delta) {
-        // Clear the screen to a dark blue colour
-        ScreenUtils.clear(0, 0, 0.2f, 1);
+        // Clear the screen to the background colour
+        ScreenUtils.clear(game.backgroundColour);
 
         // Update the camera
         camera.update();
@@ -199,18 +223,15 @@ public class GameScreen implements Screen {
         displayHand();
 
         // For now, just write the pot values at the top of the screen
-        game.font24.draw(game.batch, "Main Pot: " + mainPot, 16, game.height - 24);
-        game.font24.draw(game.batch, "Sabacc Pot: " + sabaccPot, 272, game.height - 24);
+        game.font24.draw(game.batch, "Main Pot: " + mainPot, 16, potRect.y + 48);
+        game.font24.draw(game.batch, "Sabacc Pot: " + sabaccPot, 272, potRect.y + 48);
 
         // Write how many credits the player currently has
-        game.font24.draw(game.batch, "Credits: " + player.credits(), 16, game.height - 48);
+        game.font24.draw(game.batch, "Credits: " + player.credits(), 16, potRect.y + 24);
 
         // Write all game messages at the top of the screen
-        for (int i = 0; i < messages.size; i++)
-            game.msgFont.draw(game.batch, messages.get(i), 16, game.height - 80 - i*20);
-
-        // Then draw each opponents box under the messages
-        //drawPlayerBoxes(game.height - 100 - game.maxMessages*20 - 96);
+        for (int i = 0; i < Math.min(game.maxMessages, messages.size); i++)
+            game.msgFont.draw(game.batch, messages.get(i), 16, messageRect.y + i*20 + 20);
 
         // Then draw each opponents UI stuff
         baseStage.draw();
@@ -222,7 +243,6 @@ public class GameScreen implements Screen {
             currentStage.show();
         else
             noButton.draw(game.batch, 0,0,600,128);
-
         game.batch.end();
 
         // Start a short delay timer for the next ai player
@@ -254,76 +274,37 @@ public class GameScreen implements Screen {
     }
 
     /**
-     * Draw each players box to contain info about that player under messages
-     * @param sy the starting y coordinate
-     */
-    private void drawPlayerBoxes(int sy) {
-        int y = 0;
-        Player p;
-        // @todo when the human player drops out, the opponents are drawn too high up
-        for (int i = 0; i < players.size; i++) {
-            p = players.get(i);
-            if (p.isHuman)
-                continue;
-            y = sy - 96*(i-1) + 84;
-            playerbox.draw(game.batch, 0, sy - 96*(i-1), 600, 96);
-
-            game.font24.draw(game.batch, p.name(), 12, y);
-            y -= 24;
-            game.font24.draw(game.batch, "C: " + p.credits(), 12, y);
-            y -= 24;
-
-            if (p.displayHand)
-                game.font24.draw(game.batch, "H: " + p.score(), 12, y);
-            else {
-                if (p.folded)
-                    game.font24.draw(game.batch, "H: Folded", 12, y);
-                else
-                    game.font24.draw(game.batch, "H: ?", 12, y);
-            }
-
-            for (int c = 0; c < p.numCards(); c++) {
-                // If game is not over, draw the card back
-                if (!p.displayHand)
-                    deck.cardback().draw(game.batch, 530 - (c*70), sy - 96*(i-1), 70, 96);
-                // Otherwise, draw the card face and the value of that player's hand under C
-                else
-                    p.hand().get(c).image.draw(game.batch, 530 - (c*70), sy - 96*(i-1), 70, 96);
-            }
-        }
-    }
-
-    /**
      * For each player, if their button is toggled and their cards are shown, show their cards
      */
     private void drawPlayerHands() {
         int y;
-        int sy = startOfOpponents;
+        int sy = (int)(opponentRect.y + opponentRect.height) - 64;
         Player p;
         for (PlayerButton b : playerButtons) {
             if (b == null)
                 continue;
             y = sy;
-            sy -= 96 + 10;
+            sy -= 64 + 6;
             y -= smallCardHeight;
             if (!b.isChecked())
                 continue;
             p = b.player();
             for (int i = 0; i < p.hand().size; i++) {
-                if (i % (smallCardNum - 1) == 0) {
+                if (i == 0) {
+                    playerbox.draw(game.batch, 0, y, 900, smallCardHeight);
+                    sy -= smallCardHeight;
+                }
+
+                if (i > 0 && i % smallCardNum == 0) {
+                    y -= smallCardHeight;
                     playerbox.draw(game.batch, 0, y, 900, smallCardHeight);
                     sy -= smallCardHeight;
                 }
 
                 if (p.displayHand)
-                    p.hand().get(i).image.draw(game.batch, i * smallCardWidth, y, smallCardWidth, smallCardHeight);
+                    p.hand().get(i).image.draw(game.batch, (i % smallCardNum) * smallCardWidth, y, smallCardWidth, smallCardHeight);
                 else
-                    deck.cardback().draw(game.batch, i * smallCardWidth, y, smallCardWidth, smallCardHeight);
-
-                if (i > 0 && i % (smallCardNum - 1) == 0) {
-                    y -= smallCardHeight;
-                    sy -= smallCardHeight;
-                }
+                    deck.cardback().draw(game.batch, (i % smallCardNum) * smallCardWidth, y, smallCardWidth, smallCardHeight);
             }
             y -= smallCardHeight;
         }
@@ -427,13 +408,25 @@ public class GameScreen implements Screen {
 
         // Sets up the base input adapter for scrolling and touching cards
         baseInput = new InputAdapter() {
+            Vector3 touch = new Vector3();
             @Override
             public boolean touchDown(int x, int y, int pointer, int button) {
                 selected = null;
-                Vector3 touch = new Vector3();
                 touch.set(x, y, 0);
                 camera.unproject(touch);
-                if (touch.y > 124 && touch.y < 124 + 172) {
+
+                if (touch.y > potRect.y && touch.y < menuRect.y)
+                    currentRect = potRect;
+                else if (touch.y > messageRect.y)
+                    currentRect = messageRect;
+                else if (touch.y > opponentRect.y)
+                    currentRect = opponentRect;
+                else if (touch.y > selectRect.y)
+                    currentRect = selectRect;
+                else if (touch.y > fieldRect.y)
+                    currentRect = fieldRect;
+                else if (touch.y > handRect.y) {
+                    currentRect = handRect;
                     int i = (int)((touch.x + startOfHand) / 120);
                     if (i < player.numCards()) {
                         selected = player.hand().get(i);
@@ -447,28 +440,30 @@ public class GameScreen implements Screen {
             private int leftmost;
             @Override
             public boolean touchDragged(int screenX, int screenY, int pointer) {
-                if (startX == -1) {
-                    if (screenY * game.ratioHeight > game.height - 124 || screenY * game.ratioHeight < game.height - (124 + 172))
-                        return false;
-                    startX = screenX;
+                touch.set(screenX, screenY, 0);
+                camera.unproject(touch);
+
+                if (startX == -1)
+                    startX = (int)touch.x;
+
+                if (currentRect == handRect) {
+                    // Allow the player to scroll their hand left or right if they have too many cards
+                    leftmost = Math.max(0, (player.numCards() - 5) * 120);
+                    startOfHand += (int)(startX - touch.x);
+                    if (startOfHand > leftmost)
+                        startOfHand = leftmost;
+                    else if (startOfHand < 0)
+                        startOfHand = 0;
                 }
 
-                // Make sure that the hand remains in bounds
-                leftmost = Math.max(0, (player.numCards() - 5) * 120);
-                startOfHand += (int)((startX - screenX) * game.ratioWidth);
-                if (startOfHand > leftmost)
-                    startOfHand = leftmost;
-                else if (startOfHand < 0)
-                    startOfHand = 0;
-                System.out.println(startOfHand);
-
-                startX = screenX;
+                startX = (int)touch.x;
                 return false;
             }
 
             @Override
             public boolean touchUp(int screenX, int screenY, int pointer, int button) {
                 startX = -1;
+                currentRect = null;
                 return false;
             }
         };
@@ -489,7 +484,7 @@ public class GameScreen implements Screen {
             }
             PlayerButton button = new PlayerButton(p, style);
             button.setWidth(600);
-            button.setHeight(96);
+            button.setHeight(64);
             button.addListener(new ClickListener() {
                 @Override
                 public void clicked(InputEvent e, float x, float y) {
@@ -510,12 +505,12 @@ public class GameScreen implements Screen {
      * Updates the position of each player button based on if previous ones are toggled or not
      */
     private void updateButtonPositions() {
-        int y = startOfOpponents;
+        int y = (int)(opponentRect.y + opponentRect.height) - 64;
         for (PlayerButton b : playerButtons) {
             if (b == null)
                 continue;
             b.setPosition(0, y);
-            y -= 96 + 10;   // An extra buffer of 10 pixels between buttons
+            y -= 64 + 6;   // An extra buffer of 6 pixels between buttons
             if (b.isChecked())
                 if (b.player().numCards() > 0)
                     y -= smallCardHeight * ((b.player().numCards() / smallCardNum) + 1);
