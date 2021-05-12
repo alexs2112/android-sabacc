@@ -54,7 +54,7 @@ public class BettingStage implements GameStage {
         currentStage.draw();
 
         if (currentBid > 0)
-            main.game.font24.draw(main.game.batch, "Bid: " + currentBid, 300, main.game.height - 48);
+            main.game.font24.draw(main.game.batch, "Bid: " + currentBid, 300, main.potRect.y + 24);
     }
 
     @Override
@@ -315,7 +315,7 @@ public class BettingStage implements GameStage {
     private void endRound() {
         // First, find all the players who bombed out, they will be folded and they pay
         // credits equal to the main pot into the sabacc pot
-        main.betweenRounds = true;
+        main.displayPlayerHands();
 
         // A check to account for if only one player is still in the hand, but bombed out
         if (!allFolded()) {

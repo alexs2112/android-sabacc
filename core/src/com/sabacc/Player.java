@@ -1,6 +1,7 @@
 package com.sabacc;
 
 import com.badlogic.gdx.utils.Array;
+import com.sabacc.gamestage.PlayerButton;
 
 public class Player {
     // A player has to have a name
@@ -34,6 +35,11 @@ public class Player {
     private int score;
     public int score() { return score; }
     public void refreshScore() { score = 0; }
+
+    // Some other player bools that can be toggled
+    public boolean displayHand;    // If the score and hand should be displayed between rounds
+    public PlayerButton button;
+    public void updateButton() { if (button != null) button.update(); }
 
     /**
      * A function to simply add a card to the players hand and add its value
@@ -163,6 +169,5 @@ public class Player {
         if (untilCall <= 0 && Math.random() < 0.2) // Randomly call 20% of the time if able, to prevent random loops
             return -1;
         return 0;
-
     }
 }
