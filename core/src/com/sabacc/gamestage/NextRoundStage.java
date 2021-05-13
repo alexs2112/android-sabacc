@@ -29,7 +29,7 @@ public class NextRoundStage implements GameStage {
 
         TextButton startButton = new TextButton("Start Next Round", buttonStyle);
         startButton.setWidth(600);
-        startButton.setHeight(128);
+        startButton.setHeight(main.buttonRect.height);
         startButton.setPosition(0,0);
         startButton.addListener(new ClickListener() {
             @Override

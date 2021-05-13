@@ -72,7 +72,7 @@ public class Sabacc extends Game {
 		Skin uiSkin = new Skin();
 		uiSkin.addRegions(new TextureAtlas(Gdx.files.internal("ui.atlas")));
 
-		this.setScreen(new GameScreen(this, 4, uiSkin));
+		this.setScreen(new GameScreen(this, 5, uiSkin));
 	}
 
 	@Override

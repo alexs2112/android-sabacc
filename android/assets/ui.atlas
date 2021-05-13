@@ -13,91 +13,98 @@ background
   index: -1
 button1-down
   rotate: false
-  xy: 0, 240
+  xy: 0, 184
   size: 600, 128
   orig: 600, 128
   offset: 0, 0
   index: -1
 button1-up
   rotate: false
-  xy: 0, 368
+  xy: 0, 312
   size: 600, 128
   orig: 600, 128
   offset: 0, 0
   index: -1
 button2-down
   rotate: false
-  xy: 0, 16
+  xy: 600, 120
   size: 300, 128
   orig: 300, 128
   offset: 0, 0
   index: -1
 button2-up
   rotate: false
-  xy: 600, 176
+  xy: 900, 120
   size: 300, 128
   orig: 300, 128
   offset: 0, 0
   index: -1
 button3-down
   rotate: false
-  xy: 900, 176
+  xy: 1400, 216
   size: 200, 128
   orig: 200, 128
   offset: 0, 0
   index: -1
 button3-unavailable
   rotate: false
-  xy: 300, 16
+  xy: 1200, 216
   size: 200, 128
   orig: 200, 128
   offset: 0, 0
   index: -1
 button3-up
   rotate: false
-  xy: 1100, 176
+  xy: 1600, 216
   size: 200, 128
   orig: 200, 128
   offset: 0, 0
   index: -1
 player-box
   rotate: false
-  xy: 600, 304
+  xy: 600, 248
   size: 600, 96
   orig: 600, 96
   offset: 0, 0
   index: -1
 player-button-checked
   rotate: false
-  xy: 600, 400
+  xy: 600, 344
   size: 600, 96
   orig: 600, 96
   offset: 0, 0
   index: -1
 player-button-down
   rotate: false
-  xy: 0, 144
+  xy: 0, 88
   size: 600, 96
   orig: 600, 96
   offset: 0, 0
   index: -1
 player-button-up
   rotate: false
-  xy: 1200, 400
+  xy: 1200, 344
   size: 600, 96
   orig: 600, 96
   offset: 0, 0
   index: -1
+select-rect
+  rotate: false
+  xy: 0, 16
+  size: 600, 72
+  orig: 600, 72
+  offset: 0, 0
+  index: -1
 small-button3-down
   rotate: false
-  xy: 1800, 400
+  xy: 600, 24
   size: 200, 96
   orig: 200, 96
   offset: 0, 0
   index: -1
 small-button3-up
   rotate: false
-  xy: 1200, 304
+  xy: 1800, 344
   size: 200, 96
   orig: 200, 96
   offset: 0, 0

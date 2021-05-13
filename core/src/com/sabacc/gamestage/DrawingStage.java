@@ -138,7 +138,7 @@ public class DrawingStage implements GameStage {
         // Draw Button
         TextButton drawButton = new TextButton("Draw", buttonStyle);
         drawButton.setWidth(200);
-        drawButton.setHeight(128);
+        drawButton.setHeight(main.buttonRect.height);
         drawButton.setPosition(0,0);
         drawButton.addListener(new ClickListener() {
             @Override
@@ -156,7 +156,7 @@ public class DrawingStage implements GameStage {
         // Stand Button
         TextButton standButton = new TextButton("Stand", buttonStyle);
         standButton.setWidth(200);
-        standButton.setHeight(128);
+        standButton.setHeight(main.buttonRect.height);
         standButton.setPosition(200,0);
         standButton.addListener(new ClickListener() {
             @Override
@@ -177,7 +177,7 @@ public class DrawingStage implements GameStage {
         redButtonStyle.up = main.uiSkin.getDrawable("button3-unavailable");
         TextButton callButton = new TextButton("Call", redButtonStyle);
         callButton.setWidth(200);
-        callButton.setHeight(128);
+        callButton.setHeight(main.buttonRect.height);
         callButton.setPosition(400,0);
 
         buildStage.addActor(drawButton);
@@ -193,7 +193,7 @@ public class DrawingStage implements GameStage {
         // Draw Button
         TextButton drawButton = new TextButton("Draw", buttonStyle);
         drawButton.setWidth(200);
-        drawButton.setHeight(128);
+        drawButton.setHeight(main.buttonRect.height);
         drawButton.setPosition(0,0);
         drawButton.addListener(new ClickListener() {
             @Override
@@ -211,7 +211,7 @@ public class DrawingStage implements GameStage {
         // Stand Button
         TextButton standButton = new TextButton("Stand", buttonStyle);
         standButton.setWidth(200);
-        standButton.setHeight(128);
+        standButton.setHeight(main.buttonRect.height);
         standButton.setPosition(200,0);
         standButton.addListener(new ClickListener() {
             @Override
@@ -229,7 +229,7 @@ public class DrawingStage implements GameStage {
         // CALL
         TextButton callButton = new TextButton("Call", buttonStyle);
         callButton.setWidth(200);
-        callButton.setHeight(128);
+        callButton.setHeight(main.buttonRect.height);
         callButton.setPosition(400,0);
         callButton.addListener(new ClickListener() {
             @Override

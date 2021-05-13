@@ -49,7 +49,7 @@ public class BettingStage implements GameStage {
     @Override
     public void show() {
         if (currentStage == raiseStage)
-            main.noButton.draw(main.game.batch,0,0,600,128);
+            main.noButton.draw(main.game.batch,0,0,600,main.buttonRect.height);
 
         currentStage.draw();
 
@@ -430,6 +430,8 @@ public class BettingStage implements GameStage {
         }
 
         // After allocating credits, ask the player to start the next round
+        if (winner != null)
+            winner.updateButton();
         main.setGameStage(main.nextRoundStage);
     }
 
@@ -474,7 +476,7 @@ public class BettingStage implements GameStage {
         // Check
         TextButton betButton = new TextButton("Check", buttonStyle);
         betButton.setWidth(200);
-        betButton.setHeight(128);
+        betButton.setHeight(main.buttonRect.height);
         betButton.setPosition(0,0);
         betButton.addListener(new ClickListener() {
             @Override
@@ -490,7 +492,7 @@ public class BettingStage implements GameStage {
         // Raise
         TextButton raiseButton = new TextButton("Raise", buttonStyle);
         raiseButton.setWidth(200);
-        raiseButton.setHeight(128);
+        raiseButton.setHeight(main.buttonRect.height);
         raiseButton.setPosition(200,0);
         raiseButton.addListener(new ClickListener() {
             @Override
@@ -507,7 +509,7 @@ public class BettingStage implements GameStage {
         // Fold
         TextButton foldButton = new TextButton("Fold", buttonStyle);
         foldButton.setWidth(200);
-        foldButton.setHeight(128);
+        foldButton.setHeight(main.buttonRect.height);
         foldButton.setPosition(400,0);
         foldButton.addListener(new ClickListener() {
             @Override

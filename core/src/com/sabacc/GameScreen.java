@@ -6,7 +6,6 @@ import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
@@ -78,15 +77,16 @@ public class GameScreen implements Screen {
     // A drawable that displays nothing, but is less ugly than nothing
     public Drawable noButton;
 
-    // The background is now a drawable so that I can conceal certain things
-    public Drawable background;
+    // Some other general UI drawables
+    final private Drawable selectCover;
+    final private Drawable background;
 
     // The input multiplexer that holds standard input (such as selecting cards in hand) and input relevant to the current stage
     final public InputMultiplexer input;
     private InputAdapter baseInput;
     private Stage baseStage;
     private Array<PlayerButton> playerButtons;
-
+    private Vector3 inputTouch = new Vector3();
 
     // A set of gamestages that are swapped between
     final private FitViewport viewport;
@@ -118,14 +118,18 @@ public class GameScreen implements Screen {
     // The starting x coordinate of where to draw the player's hand, to enable horizontal scrolling
     private int startOfHand;
 
+    // The starting y coordinates of various rectangles to enable vertical scrolling
+    private int startScrollOpponents;
+    private int maxScrollOpponents;
+
     // The starting y coordinate of each screen area, to enable vertical scrolling
     private Rectangle menuRect;
     public Rectangle potRect;            // Public as it is seen by the betting stage
     private Rectangle messageRect;
     private Rectangle opponentRect;
     private Rectangle selectRect;
-    private Rectangle fieldRect;
     private Rectangle handRect;
+    public Rectangle buttonRect;
     private Rectangle currentRect;
 
 
@@ -141,18 +145,20 @@ public class GameScreen implements Screen {
         noButton = uiSkin.getDrawable("button1-up");
 
         // Initialize where each screen area exists
-        menuRect = new Rectangle(0, game.height - 64, 600, 64);
-        potRect = new Rectangle(0, game.height - 128, 600, 64);
+        buttonRect = new Rectangle(0,0,600,112); // 96 is a little small, but 128 is a little big
+        handRect = new Rectangle(0, buttonRect.y + buttonRect.height, 600, 172);
+        selectRect = new Rectangle(0, handRect.y + handRect.height, 600, 72);
+        opponentRect = new Rectangle(0, selectRect.y + selectRect.height, 600, game.height - 288 - (selectRect.y + selectRect.height));
         messageRect = new Rectangle(0, game.height - 288, 600, 160);
-        opponentRect = new Rectangle(0, 436, 600, game.height - 288 - 436);
-        selectRect = new Rectangle(0, 396, 600, 40);
-        fieldRect = new Rectangle(0, 300, 600, 96);
-        handRect = new Rectangle(0, 128, 600, 172);
+        potRect = new Rectangle(0, game.height - 128, 600, 64);
+        menuRect = new Rectangle(0, game.height - 64, 600, 64);
 
         // Load the viewport for the different button stages
         // Keep track of the current stage, either for the betting round or the drawing round
         viewport = new FitViewport(game.width, game.height, camera);
         playerbox = uiSkin.getDrawable("player-box");
+        selectCover = uiSkin.getDrawable("select-rect");
+        background = uiSkin.getDrawable("background");
 
         // Default small card size (for opponents) is 70x96 px
         smallCardWidth = 70;
@@ -219,8 +225,16 @@ public class GameScreen implements Screen {
 
         game.batch.begin();
 
+        // Draw each opponents UI stuff first as it can be covered by everything else
+        baseStage.draw();
+        drawPlayerHands();
+
         // Draw the players hand
         displayHand();
+
+        // For now just draw a big background box from messages to the top of the screen, to block
+        // off opponents going under messages and looking ugly
+        background.draw(game.batch, 0, messageRect.y, 600, messageRect.height + potRect.height + menuRect.height);
 
         // For now, just write the pot values at the top of the screen
         game.font24.draw(game.batch, "Main Pot: " + mainPot, 16, potRect.y + 48);
@@ -233,16 +247,12 @@ public class GameScreen implements Screen {
         for (int i = 0; i < Math.min(game.maxMessages, messages.size); i++)
             game.msgFont.draw(game.batch, messages.get(i), 16, messageRect.y + i*20 + 20);
 
-        // Then draw each opponents UI stuff
-        baseStage.draw();
-        drawPlayerHands();
-
         // Show the current stage on top of everything when it is the players turn
         // @todo this is a bit lazy to check the current stage here
         if (getCurrentPlayer().isHuman || currentStage == nextRoundStage)
             currentStage.show();
         else
-            noButton.draw(game.batch, 0,0,600,128);
+            noButton.draw(game.batch, 0,0,buttonRect.width,buttonRect.height);
         game.batch.end();
 
         // Start a short delay timer for the next ai player
@@ -257,20 +267,23 @@ public class GameScreen implements Screen {
      * @todo add some little arrows or something if there are cards off screen to remind the player they can scroll
      */
     private void displayHand() {
+        selectCover.draw(game.batch, 0, selectRect.y, 600, selectRect.height);
+        background.draw(game.batch, 0, handRect.y, 600, handRect.height);
+
         for (int i = 0; i < player.hand().size; i++) {
             Card c = player.hand().get(i);
-            c.image.draw(game.batch, i * 120 - startOfHand, 128, 120, 172);
+            c.image.draw(game.batch, i * 120 - startOfHand, handRect.y, 120, 172);
 
             // If the card is selected by the player, draw the selected border over it
             if (c == selected)
-                deck.selected().draw(game.batch, i * 120 - startOfHand, 128, 120, 172);
+                deck.selected().draw(game.batch, i * 120 - startOfHand, handRect.y, 120, 172);
         }
         if (player.numCards() > 0)
-            game.font24.draw(game.batch, "Value: " + player.score(), 16, 332);
+            game.font24.draw(game.batch, "Value: " + player.score(), 16, selectRect.y + 32);
 
         // Write the name of the currently selected card above the players hand value
         if (selected != null)
-            game.font24.draw(game.batch, selected.name, 16, 356);
+            game.font24.draw(game.batch, selected.name, 16, selectRect.y + 56);
     }
 
     /**
@@ -278,7 +291,7 @@ public class GameScreen implements Screen {
      */
     private void drawPlayerHands() {
         int y;
-        int sy = (int)(opponentRect.y + opponentRect.height) - 64;
+        int sy = (int)(opponentRect.y + opponentRect.height) - 64 + startScrollOpponents;
         Player p;
         for (PlayerButton b : playerButtons) {
             if (b == null)
@@ -335,8 +348,10 @@ public class GameScreen implements Screen {
             addMessage(players.get(i).name() + " drops from the game!");
 
             // Remove the player and its associated button
+            // @todo not sure if removing the button works properly
             players.removeIndex(i);
             playerButtons.removeIndex(i);
+            updateButtonPositions();
             i--;
         }
 
@@ -398,6 +413,7 @@ public class GameScreen implements Screen {
         bettingStage.dispose();
         drawingStage.dispose();
         nextRoundStage.dispose();
+        baseStage.dispose();
         uiSkin.dispose();
     }
 
@@ -408,26 +424,23 @@ public class GameScreen implements Screen {
 
         // Sets up the base input adapter for scrolling and touching cards
         baseInput = new InputAdapter() {
-            Vector3 touch = new Vector3();
             @Override
             public boolean touchDown(int x, int y, int pointer, int button) {
                 selected = null;
-                touch.set(x, y, 0);
-                camera.unproject(touch);
+                inputTouch.set(x, y, 0);
+                camera.unproject(inputTouch);
 
-                if (touch.y > potRect.y && touch.y < menuRect.y)
+                if (inputTouch.y > potRect.y && inputTouch.y < menuRect.y)
                     currentRect = potRect;
-                else if (touch.y > messageRect.y)
+                else if (inputTouch.y > messageRect.y)
                     currentRect = messageRect;
-                else if (touch.y > opponentRect.y)
+                else if (inputTouch.y > opponentRect.y)
                     currentRect = opponentRect;
-                else if (touch.y > selectRect.y)
+                else if (inputTouch.y > selectRect.y)
                     currentRect = selectRect;
-                else if (touch.y > fieldRect.y)
-                    currentRect = fieldRect;
-                else if (touch.y > handRect.y) {
+                else if (inputTouch.y > handRect.y) {
                     currentRect = handRect;
-                    int i = (int)((touch.x + startOfHand) / 120);
+                    int i = (int) ((inputTouch.x + startOfHand) / 120);
                     if (i < player.numCards()) {
                         selected = player.hand().get(i);
                         return true;
@@ -437,32 +450,42 @@ public class GameScreen implements Screen {
             }
 
             private int startX = -1;
+            private int startY = -1;
             private int leftmost;
             @Override
             public boolean touchDragged(int screenX, int screenY, int pointer) {
-                touch.set(screenX, screenY, 0);
-                camera.unproject(touch);
+                inputTouch.set(screenX, screenY, 0);
+                camera.unproject(inputTouch);
 
                 if (startX == -1)
-                    startX = (int)touch.x;
+                    startX = (int) inputTouch.x;
+
+                if (startY == -1)
+                    startY = (int) inputTouch.y;
 
                 if (currentRect == handRect) {
                     // Allow the player to scroll their hand left or right if they have too many cards
                     leftmost = Math.max(0, (player.numCards() - 5) * 120);
-                    startOfHand += (int)(startX - touch.x);
+                    startOfHand += (int)(startX - inputTouch.x);
                     if (startOfHand > leftmost)
                         startOfHand = leftmost;
                     else if (startOfHand < 0)
                         startOfHand = 0;
+                } else if (currentRect == opponentRect) {
+                    // Allow the player to scroll their opponents up or down, to see ones that would otherwise not fit on the screen
+                    startScrollOpponents = Math.max(0, Math.min(startScrollOpponents - (int)(startY - inputTouch.y), maxScrollOpponents));
+                    updateButtonPositions();
                 }
 
-                startX = (int)touch.x;
+                startX = (int) inputTouch.x;
+                startY = (int) inputTouch.y;
                 return false;
             }
 
             @Override
             public boolean touchUp(int screenX, int screenY, int pointer, int button) {
                 startX = -1;
+                startY = -1;
                 currentRect = null;
                 return false;
             }
@@ -482,13 +505,22 @@ public class GameScreen implements Screen {
                 playerButtons.add(null);
                 continue;
             }
-            PlayerButton button = new PlayerButton(p, style);
+            final PlayerButton button = new PlayerButton(p, style);
             button.setWidth(600);
             button.setHeight(64);
             button.addListener(new ClickListener() {
                 @Override
                 public void clicked(InputEvent e, float x, float y) {
-                    updateButtonPositions();    // After toggling, update positions of each button
+                    // @todo making sure the button is in bounds is kind of awkward, also expensive
+                    inputTouch.set(0, Gdx.input.getY(), 0);
+                    camera.unproject(inputTouch);
+                    if (inputTouch.y < opponentRect.y || inputTouch.y > opponentRect.y + opponentRect.height)
+                        button.setChecked(!button.isChecked());
+                    else {
+                        updateMaxScrollOpponents();
+                        startScrollOpponents = Math.max(0, Math.min(startScrollOpponents, maxScrollOpponents));
+                        updateButtonPositions();    // After toggling, update positions of each button
+                    }
                 }
             });
             p.button = button;
@@ -505,17 +537,39 @@ public class GameScreen implements Screen {
      * Updates the position of each player button based on if previous ones are toggled or not
      */
     private void updateButtonPositions() {
-        int y = (int)(opponentRect.y + opponentRect.height) - 64;
+        int y = (int)(opponentRect.y + opponentRect.height) - 64 + startScrollOpponents;
+        maxScrollOpponents = 0;
         for (PlayerButton b : playerButtons) {
             if (b == null)
                 continue;
             b.setPosition(0, y);
             y -= 64 + 6;   // An extra buffer of 6 pixels between buttons
+            maxScrollOpponents += 70;
+            if (b.isChecked())
+                if (b.player().numCards() > 0) {
+                    y -= smallCardHeight * ((b.player().numCards() / smallCardNum) + 1);
+                    maxScrollOpponents += smallCardHeight * ((b.player().numCards() / smallCardNum) + 1);
+                    //@todo maxScrollOpponents is handled lazily, fix later
+                }
+        }
+        maxScrollOpponents -= opponentRect.height;
+        Gdx.graphics.requestRendering();
+    }
+
+    /**
+     * A small helper method that updates maxScrollOpponents without updating all button positions
+     * Used for toggling opponents open or closed
+     */
+    private void updateMaxScrollOpponents() {
+        maxScrollOpponents = 0;
+        for (PlayerButton b : playerButtons) {
+            if (b == null)
+                continue;
+            maxScrollOpponents += 70;
             if (b.isChecked())
                 if (b.player().numCards() > 0)
-                    y -= smallCardHeight * ((b.player().numCards() / smallCardNum) + 1);
+                    maxScrollOpponents += smallCardHeight * ((b.player().numCards() / smallCardNum) + 1);
         }
-        Gdx.graphics.requestRendering();
     }
 }
 
