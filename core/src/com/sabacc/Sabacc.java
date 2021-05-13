@@ -39,6 +39,8 @@ public class Sabacc extends Game {
 	public int ante;
 	public Color backgroundColour;
 	public boolean autoDisplayAndHide;	// Automatically open and close opponents at the end and start of rounds
+	public float shiftChance;
+	public float timeForDoubleTap;	// How long the player has between taps to double click a card to move it to the interference field
 	
 	@Override
 	public void create () {
@@ -63,6 +65,8 @@ public class Sabacc extends Game {
 		ante = 20;
 		backgroundColour = new Color(0,0,0.2f,1);
 		autoDisplayAndHide = true;
+		shiftChance = 0.05f;	// 5% chance for a sabacc shift after every player takes a turn, should happen around once, twice is not uncommon, thrice is rare
+		timeForDoubleTap = 0.5f;	// half a second
 
 		// Make the graphics non-continuous, to save battery
 		Gdx.graphics.setContinuousRendering(false);

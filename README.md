@@ -52,15 +52,11 @@ In the event that multiple players have the same winning hand, a Sudden Demise i
 
 **Sabacc Shift**
 
-At any point after a drawing or betting round, a Sabacc shift may happen. This random event redistributes the values of all cards in each players hand. The only way to prevent this is to place a card into the Interference Field at any time during their turn. The tradeoff of cards in the field being unable to be shifted is that the value is known to all other players.
+At any point after a player draws or bets, a Sabacc shift may happen. This random event redistributes the values of all cards in each players hand. The only way to prevent this is to place a card into the Interference Field at any time during their turn. The tradeoff of cards in the field being unable to be shifted is that the value is known to all other players.
 
 **Unimplemented Features**
 
 As of now, Sudden Demise only happens exactly once per "hand value". So if a Sudden Demise happens and there are multiple players with the same score, the first one will get the win. This seems exceedingly unlikely in practice.
-
-Sabacc Shifts have also not been implemented.
-
-Opponents are sort of capped based on your screen dimensions. I will be fixing this in the future with general UI updates to let you scroll through up to 7 opponents (more will be able to be enabled through the settings) along with toggling them to view their cards and stuff like that. Also generating names.
 
 **Known Bugs**
 
@@ -70,22 +66,22 @@ Things get a little weird sometimes once the player drops from the game. There m
 
 **Current Roadmap**
 
- - Implement the Sabacc Shift and the Interference Field. A player can place cards into the field by clicking a card and then clicking the field. Opponent's interference cards have a blue border and are displayed underneath their hand (so clicking their tab will have multiple rows of cards).
+ - Implement the Sabacc Shift and the Interference Field. A player can place cards into the field by double clicking a card (to lock it) and a small icon will be displayed on it. Opponent's interference cards have a blue border and are displayed underneath their hand (so clicking their tab will have multiple rows of cards).
+
+ - Large AI update once everything is implemented to tie it all together and make the game actually playable
 
 **Stuff that can be done at any time**
  (In no particular order)
 
- - AI Updates (always)
+ - Different message colours along with minor updates to buttons and stuff
 
- - Different message colours
+    - Allow messages to be longer than the screen and wrap around to new lines. Also allow the player to scroll through previous messages efficiently
 
- - A main menu and settings screen
+ - A main menu that leads to new game, settings, and rules screens
 
  - Add a delay between dealing cards when enacting Sudden Demise
 
  - Player profiles, to save and load your profile and have different games. Can add new AI's that play differently and have higher stakes tables with steeper buy in prices and antes.
-
- - Main menu and settings
 
  - Clicking an opponents card tells you what card it is, probably to be done in the UI update. This might be moderately difficult.
 

@@ -38,6 +38,7 @@ public class GameScreen implements Screen {
         return players.get(currentPlayer);
     }
     public void nextPlayer() {
+        sabaccShift();  // Try for a shift after each player's action
         players.get(currentPlayer).updateButton(); // Update this players button
         currentPlayer = (currentPlayer + 1) % players.size;
         while (players.get(currentPlayer).folded)
@@ -70,6 +71,8 @@ public class GameScreen implements Screen {
 
     // The currently selected card, defaults to null
     private Card selected;
+    public Card doubleTap;      // The current card the player can double tap, if tapped again within a time frame it will
+                                // place the card into the interference field, otherwise gets set back to null
     final private int smallCardHeight;
     final private int smallCardWidth;
     final private int smallCardNum;     // how many small cards fit on the screen per row at once
@@ -114,6 +117,7 @@ public class GameScreen implements Screen {
     // The skin for different buttons
     final public Skin uiSkin;
     final private Drawable playerbox;
+    final private Drawable lock;
 
     // The starting x coordinate of where to draw the player's hand, to enable horizontal scrolling
     private int startOfHand;
@@ -159,6 +163,7 @@ public class GameScreen implements Screen {
         playerbox = uiSkin.getDrawable("player-box");
         selectCover = uiSkin.getDrawable("select-rect");
         background = uiSkin.getDrawable("background");
+        lock = uiSkin.getDrawable("lock");
 
         // Default small card size (for opponents) is 70x96 px
         smallCardWidth = 70;
@@ -269,16 +274,29 @@ public class GameScreen implements Screen {
     private void displayHand() {
         selectCover.draw(game.batch, 0, selectRect.y, 600, selectRect.height);
         background.draw(game.batch, 0, handRect.y, 600, handRect.height);
-
-        for (int i = 0; i < player.hand().size; i++) {
-            Card c = player.hand().get(i);
+        int i;
+        Card c;
+        for (i = 0; i < player.numCards(); i++) {
+            c = player.hand().get(i);
             c.image.draw(game.batch, i * 120 - startOfHand, handRect.y, 120, 172);
 
             // If the card is selected by the player, draw the selected border over it
             if (c == selected)
                 deck.selected().draw(game.batch, i * 120 - startOfHand, handRect.y, 120, 172);
         }
-        if (player.numCards() > 0)
+        for (int j = 0; j < player.numField(); j++) {
+            c = player.field().get(j);
+            c.image.draw(game.batch, (i+j) * 120 - startOfHand, handRect.y, 120, 172);
+
+            // If the card is selected by the player, draw the selected border over it
+            if (c == selected)
+                deck.selected().draw(game.batch, (i+j) * 120 - startOfHand, handRect.y, 120, 172);
+
+            // Draw the lock icon to show that this card is in the interference field
+            lock.draw(game.batch, (i+j+1) * 120 - startOfHand - 48, handRect.y + handRect.height - 48, 32, 32);
+        }
+
+        if (player.numCards() + player.numField() > 0)
             game.font24.draw(game.batch, "Value: " + player.score(), 16, selectRect.y + 32);
 
         // Write the name of the currently selected card above the players hand value
@@ -337,6 +355,7 @@ public class GameScreen implements Screen {
         for (Player p : players) {
             p.refreshScore();
             p.hand().clear();
+            p.field().clear();
         }
         drawingStage.resetUntilCall();
         bettingStage.resetBettingRound();
@@ -385,6 +404,32 @@ public class GameScreen implements Screen {
             }
             p.updateButton();
         }
+    }
+
+    /**
+     * Randomly determines if a Sabacc Shift should happen. A chance after each player makes
+     * a move
+     * Replaces the current deck with a new deck, for each player they replace each card in their
+     * hand with new cards. Cards in their Interference Field are not affected
+     */
+    public void sabaccShift() {
+        if (Math.random() > game.shiftChance)
+            return;
+        addMessage("A Sabacc Shift has occurred!!");
+        deck.refreshDeck();
+        for (Player p : players)
+            p.sabaccShift(deck);
+    }
+
+    /**
+     * Removes the card from the players hand and adds it to their interference field, to
+     * be protected from Sabacc Shifts but know to other players
+     * @param p the player
+     * @param c the card in their hand
+     */
+    public void fieldCard(Player p, Card c) {
+        addMessage(p.name() + " places " + c.name + " into the Interference Field");
+        p.fieldCard(c);
     }
 
     @Override
@@ -441,9 +486,24 @@ public class GameScreen implements Screen {
                 else if (inputTouch.y > handRect.y) {
                     currentRect = handRect;
                     int i = (int) ((inputTouch.x + startOfHand) / 120);
-                    if (i < player.numCards()) {
-                        selected = player.hand().get(i);
-                        return true;
+                    if (i < player.numCards() + player.numField()) {
+                        if (i < player.numCards()) {
+                            selected = player.hand().get(i);
+                            if (selected == doubleTap) {
+                                // If the player double taps a card, field it
+                                fieldCard(player, doubleTap);
+                                doubleTap = null;
+                            } else {
+                                // Otherwise, start a new timer to see if they double tap another card
+                                doubleTap = selected;
+                                timer.timeDoubleTap(doubleTap, game.timeForDoubleTap);
+                            }
+                            return true;
+                        }
+                        else {
+                            selected = player.field().get(i - player.numCards());
+                            return true;
+                        }
                     }
                 }
                 return false;
@@ -465,7 +525,7 @@ public class GameScreen implements Screen {
 
                 if (currentRect == handRect) {
                     // Allow the player to scroll their hand left or right if they have too many cards
-                    leftmost = Math.max(0, (player.numCards() - 5) * 120);
+                    leftmost = Math.max(0, (player.numCards() + player.numField() - 5) * 120);
                     startOfHand += (int)(startX - inputTouch.x);
                     if (startOfHand > leftmost)
                         startOfHand = leftmost;

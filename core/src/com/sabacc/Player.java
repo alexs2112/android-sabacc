@@ -31,6 +31,15 @@ public class Player {
     public Array<Card> hand() { return hand; }
     public int numCards() { return hand.size; }
 
+    // Handling the Interference Field
+    private final Array<Card> field;
+    public Array<Card> field() { return field; }
+    public void fieldCard(Card c) {
+        if (hand.removeValue(c, true))
+            field.add(c);
+    }
+    public int numField() { return field.size; }
+
     // The current score
     private int score;
     public int score() { return score; }
@@ -50,6 +59,22 @@ public class Player {
         hand.add(c);
     }
 
+    /**
+     * A helper function to implement a sabacc shift for this one player, replaces all the cards
+     * in their hand with a new card from the deck
+     * @param deck the deck to draw from
+     */
+    public void sabaccShift(Deck deck) {
+        int n = numCards();
+        for (Card c : hand)
+            score -= c.value;
+        hand.clear();
+        while (n > 0) {
+            n--;
+            addCard(deck.drawCard());
+        }
+    }
+
     // Some variables for each game round
     public int currentBid;
     public boolean hasBet;   // To check if the player has matched the current bet
@@ -65,6 +90,7 @@ public class Player {
         this.name = name;
         this.credits = credits;
         hand = new Array<Card>();
+        field = new Array<Card>();
     }
 
     /**

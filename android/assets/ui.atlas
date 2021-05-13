@@ -6,105 +6,112 @@ filter: Nearest, Nearest
 repeat: none
 background
   rotate: false
-  xy: 0, 0
+  xy: 1200, 216
   size: 16, 16
   orig: 16, 16
   offset: 0, 0
   index: -1
 button1-down
   rotate: false
-  xy: 0, 184
+  xy: 0, 200
   size: 600, 128
   orig: 600, 128
   offset: 0, 0
   index: -1
 button1-up
   rotate: false
-  xy: 0, 312
+  xy: 0, 328
   size: 600, 128
   orig: 600, 128
   offset: 0, 0
   index: -1
 button2-down
   rotate: false
-  xy: 600, 120
+  xy: 600, 136
   size: 300, 128
   orig: 300, 128
   offset: 0, 0
   index: -1
 button2-up
   rotate: false
-  xy: 900, 120
+  xy: 900, 136
   size: 300, 128
   orig: 300, 128
   offset: 0, 0
   index: -1
 button3-down
   rotate: false
-  xy: 1400, 216
+  xy: 1400, 232
   size: 200, 128
   orig: 200, 128
   offset: 0, 0
   index: -1
 button3-unavailable
   rotate: false
-  xy: 1200, 216
+  xy: 1200, 232
   size: 200, 128
   orig: 200, 128
   offset: 0, 0
   index: -1
 button3-up
   rotate: false
-  xy: 1600, 216
+  xy: 1600, 232
   size: 200, 128
   orig: 200, 128
   offset: 0, 0
   index: -1
+lock
+  rotate: false
+  xy: 0, 0
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
 player-box
   rotate: false
-  xy: 600, 248
+  xy: 600, 264
   size: 600, 96
   orig: 600, 96
   offset: 0, 0
   index: -1
 player-button-checked
   rotate: false
-  xy: 600, 344
+  xy: 600, 360
   size: 600, 96
   orig: 600, 96
   offset: 0, 0
   index: -1
 player-button-down
   rotate: false
-  xy: 0, 88
+  xy: 0, 104
   size: 600, 96
   orig: 600, 96
   offset: 0, 0
   index: -1
 player-button-up
   rotate: false
-  xy: 1200, 344
+  xy: 1200, 360
   size: 600, 96
   orig: 600, 96
   offset: 0, 0
   index: -1
 select-rect
   rotate: false
-  xy: 0, 16
+  xy: 0, 32
   size: 600, 72
   orig: 600, 72
   offset: 0, 0
   index: -1
 small-button3-down
   rotate: false
-  xy: 600, 24
+  xy: 600, 40
   size: 200, 96
   orig: 200, 96
   offset: 0, 0
   index: -1
 small-button3-up
   rotate: false
-  xy: 1800, 344
+  xy: 1800, 360
   size: 200, 96
   orig: 200, 96
   offset: 0, 0

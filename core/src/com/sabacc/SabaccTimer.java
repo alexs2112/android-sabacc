@@ -28,4 +28,20 @@ public class SabaccTimer {
         };
         Timer.instance().scheduleTask(task, delay);
     }
+
+    /**
+     *
+     */
+    public void timeDoubleTap(final Card c, float delay) {
+        task = new Timer.Task() {
+            @Override
+            public void run() {
+                // If the timer runs out and we are still waiting for the same double tap, set it to null
+                if (c == screen.doubleTap)
+                    screen.doubleTap = null;
+                // Otherwise, ignore this
+            }
+        };
+        Timer.instance().scheduleTask(task, delay);
+    }
 }
