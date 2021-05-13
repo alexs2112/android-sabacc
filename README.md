@@ -66,9 +66,9 @@ Opponents are sort of capped based on your screen dimensions. I will be fixing t
 
 The font I am currently using (AnakinMono) does not have a negative sign, so your hand value might look a little strange. Working on fixing that as it is annoying, but does not affect gameplay.
 
-**Current Roadmap**
+Things get a little weird sometimes once the player drops from the game. There may be the occasional bug where the game just sits there or crashes when all players have folded and at least one player has already dropped. Not sure if it was fixed or not by another update
 
- - A general UI update. Opponents will be dropdown boxes. The main section displays Player Name, Credits, Number of Cards, and Known Value (when the Interference Field is implemented). When you click an opponent, it will open a box that displays their cards (or cardbacks if you don't know them). At the end of a round, each player is opened and their cards displayed. Also enable scrolling through opponents to have up to 7, and scrolling through the list of messages.
+**Current Roadmap**
 
  - Implement the Sabacc Shift and the Interference Field. A player can place cards into the field by clicking a card and then clicking the field. Opponent's interference cards have a blue border and are displayed underneath their hand (so clicking their tab will have multiple rows of cards).
 
@@ -84,6 +84,8 @@ The font I am currently using (AnakinMono) does not have a negative sign, so you
  - Add a delay between dealing cards when enacting Sudden Demise
 
  - Player profiles, to save and load your profile and have different games. Can add new AI's that play differently and have higher stakes tables with steeper buy in prices and antes.
+
+ - Main menu and settings
 
  - Clicking an opponents card tells you what card it is, probably to be done in the UI update. This might be moderately difficult.
 
