@@ -39,6 +39,13 @@ public class Player {
             field.add(c);
     }
     public int numField() { return field.size; }
+    public int fieldValue() {
+        int x = 0;
+        for (Card c : field)
+            x += c.value;
+        return x;
+    }
+    public int totalCards() { return numField() + numCards(); }
 
     // The current score
     private int score;
@@ -174,7 +181,7 @@ public class Player {
             return bid - currentBid + (int)(credits * 2 * minbid);
 
         // If they have a good hand, raise the bid by minbid
-        if (aScore > 17 && bid < minbid * credits && roundbid < maxbid * credits)
+        if (aScore > 17 && aScore < 24 && bid < minbid * credits && roundbid < maxbid * credits)
             return bid - currentBid + (int)(credits * minbid);
 
         // Otherwise, match the bid

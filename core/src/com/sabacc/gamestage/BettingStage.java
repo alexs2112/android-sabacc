@@ -54,7 +54,7 @@ public class BettingStage implements GameStage {
         currentStage.draw();
 
         if (currentBid > 0)
-            main.game.font24.draw(main.game.batch, "Bid: " + currentBid, 300, main.potRect.y + 24);
+            main.game.font24.draw(main.game.batch, "Bid: " + currentBid, 300, main.potRect.y + 30);
     }
 
     @Override

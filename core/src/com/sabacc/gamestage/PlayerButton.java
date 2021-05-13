@@ -75,8 +75,12 @@ public class PlayerButton extends Button {
             s += " H:" + player.numCards();
             if (player.displayHand)
                 s += " S:" + player.score() + " ";
-            else
-                s += " S:?? ";
+            else {
+                if (player.numField() > 0)
+                    s += " S:?" + player.fieldValue() + " ";
+                else
+                    s += " S:?? ";
+            }
         }
         statLabel.setText(s);   // This checks if the new string is different before setting it
     }

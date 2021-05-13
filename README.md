@@ -54,21 +54,19 @@ In the event that multiple players have the same winning hand, a Sudden Demise i
 
 At any point after a player draws or bets, a Sabacc shift may happen. This random event redistributes the values of all cards in each players hand. The only way to prevent this is to place a card into the Interference Field at any time during their turn. The tradeoff of cards in the field being unable to be shifted is that the value is known to all other players.
 
-**Unimplemented Features**
-
-As of now, Sudden Demise only happens exactly once per "hand value". So if a Sudden Demise happens and there are multiple players with the same score, the first one will get the win. This seems exceedingly unlikely in practice.
-
 **Known Bugs**
 
 The font I am currently using (AnakinMono) does not have a negative sign, so your hand value might look a little strange. Working on fixing that as it is annoying, but does not affect gameplay.
 
 Things get a little weird sometimes once the player drops from the game. There may be the occasional bug where the game just sits there or crashes when all players have folded and at least one player has already dropped. Not sure if it was fixed or not by another update
 
+As of now, Sudden Demise only happens exactly once per "hand value". So if a Sudden Demise happens and there are multiple players with the same score, the first one will get the win. This seems exceedingly unlikely in practice.
+
 **Current Roadmap**
 
  - Implement the Sabacc Shift and the Interference Field. A player can place cards into the field by double clicking a card (to lock it) and a small icon will be displayed on it. Opponent's interference cards have a blue border and are displayed underneath their hand (so clicking their tab will have multiple rows of cards).
 
- - Large AI update once everything is implemented to tie it all together and make the game actually playable
+ - Large AI update once everything is implemented to tie it all together and make the game actually playable. They dont actually use the interference field right now, but the code and UI works for them
 
 **Stuff that can be done at any time**
  (In no particular order)

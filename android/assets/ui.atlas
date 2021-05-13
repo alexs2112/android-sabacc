@@ -6,58 +6,65 @@ filter: Nearest, Nearest
 repeat: none
 background
   rotate: false
-  xy: 1200, 216
+  xy: 500, 144
   size: 16, 16
   orig: 16, 16
   offset: 0, 0
   index: -1
 button1-down
   rotate: false
-  xy: 0, 200
+  xy: 0, 256
   size: 600, 128
   orig: 600, 128
   offset: 0, 0
   index: -1
 button1-up
   rotate: false
-  xy: 0, 328
+  xy: 0, 384
   size: 600, 128
   orig: 600, 128
   offset: 0, 0
   index: -1
 button2-down
   rotate: false
-  xy: 600, 136
+  xy: 0, 32
   size: 300, 128
   orig: 300, 128
   offset: 0, 0
   index: -1
 button2-up
   rotate: false
-  xy: 900, 136
+  xy: 600, 192
   size: 300, 128
   orig: 300, 128
   offset: 0, 0
   index: -1
 button3-down
   rotate: false
-  xy: 1400, 232
+  xy: 900, 192
   size: 200, 128
   orig: 200, 128
   offset: 0, 0
   index: -1
 button3-unavailable
   rotate: false
-  xy: 1200, 232
+  xy: 300, 32
   size: 200, 128
   orig: 200, 128
   offset: 0, 0
   index: -1
 button3-up
   rotate: false
-  xy: 1600, 232
+  xy: 1100, 192
   size: 200, 128
   orig: 200, 128
+  offset: 0, 0
+  index: -1
+line
+  rotate: false
+  xy: 600, 188
+  size: 32, 4
+  orig: 32, 4
   offset: 0, 0
   index: -1
 lock
@@ -69,49 +76,42 @@ lock
   index: -1
 player-box
   rotate: false
-  xy: 600, 264
+  xy: 600, 320
   size: 600, 96
   orig: 600, 96
   offset: 0, 0
   index: -1
 player-button-checked
   rotate: false
-  xy: 600, 360
+  xy: 600, 416
   size: 600, 96
   orig: 600, 96
   offset: 0, 0
   index: -1
 player-button-down
   rotate: false
-  xy: 0, 104
+  xy: 0, 160
   size: 600, 96
   orig: 600, 96
   offset: 0, 0
   index: -1
 player-button-up
   rotate: false
-  xy: 1200, 360
+  xy: 1200, 416
   size: 600, 96
   orig: 600, 96
   offset: 0, 0
   index: -1
-select-rect
-  rotate: false
-  xy: 0, 32
-  size: 600, 72
-  orig: 600, 72
-  offset: 0, 0
-  index: -1
 small-button3-down
   rotate: false
-  xy: 600, 40
+  xy: 1800, 416
   size: 200, 96
   orig: 200, 96
   offset: 0, 0
   index: -1
 small-button3-up
   rotate: false
-  xy: 1800, 360
+  xy: 1200, 320
   size: 200, 96
   orig: 200, 96
   offset: 0, 0
