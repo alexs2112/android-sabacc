@@ -6,70 +6,77 @@ filter: Nearest, Nearest
 repeat: none
 background
   rotate: false
-  xy: 500, 144
+  xy: 800, 192
   size: 16, 16
   orig: 16, 16
   offset: 0, 0
   index: -1
 button1-down
   rotate: false
-  xy: 0, 256
-  size: 600, 128
-  orig: 600, 128
+  xy: 0, 288
+  size: 600, 112
+  orig: 600, 112
   offset: 0, 0
   index: -1
 button1-up
   rotate: false
-  xy: 0, 384
-  size: 600, 128
-  orig: 600, 128
+  xy: 0, 400
+  size: 600, 112
+  orig: 600, 112
   offset: 0, 0
   index: -1
 button2-down
   rotate: false
-  xy: 0, 32
-  size: 300, 128
-  orig: 300, 128
+  xy: 0, 0
+  size: 300, 112
+  orig: 300, 112
   offset: 0, 0
   index: -1
 button2-up
   rotate: false
-  xy: 600, 192
-  size: 300, 128
-  orig: 300, 128
+  xy: 300, 0
+  size: 300, 112
+  orig: 300, 112
   offset: 0, 0
   index: -1
 button3-down
   rotate: false
-  xy: 900, 192
-  size: 200, 128
-  orig: 200, 128
+  xy: 600, 96
+  size: 200, 112
+  orig: 200, 112
   offset: 0, 0
   index: -1
 button3-unavailable
   rotate: false
-  xy: 300, 32
-  size: 200, 128
-  orig: 200, 128
+  xy: 600, 208
+  size: 200, 112
+  orig: 200, 112
   offset: 0, 0
   index: -1
 button3-up
   rotate: false
-  xy: 1100, 192
-  size: 200, 128
-  orig: 200, 128
+  xy: 800, 208
+  size: 200, 112
+  orig: 200, 112
+  offset: 0, 0
+  index: -1
+credits
+  rotate: false
+  xy: 0, 112
+  size: 400, 80
+  orig: 400, 80
   offset: 0, 0
   index: -1
 line
   rotate: false
-  xy: 600, 188
+  xy: 600, 92
   size: 32, 4
   orig: 32, 4
   offset: 0, 0
   index: -1
 lock
   rotate: false
-  xy: 0, 0
+  xy: 1800, 480
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
@@ -90,7 +97,7 @@ player-button-checked
   index: -1
 player-button-down
   rotate: false
-  xy: 0, 160
+  xy: 0, 192
   size: 600, 96
   orig: 600, 96
   offset: 0, 0
@@ -102,17 +109,17 @@ player-button-up
   orig: 600, 96
   offset: 0, 0
   index: -1
-small-button3-down
+settings-button-down
   rotate: false
-  xy: 1800, 416
-  size: 200, 96
-  orig: 200, 96
+  xy: 1200, 336
+  size: 200, 80
+  orig: 200, 80
   offset: 0, 0
   index: -1
-small-button3-up
+settings-button-up
   rotate: false
-  xy: 1200, 320
-  size: 200, 96
-  orig: 200, 96
+  xy: 400, 112
+  size: 200, 80
+  orig: 200, 80
   offset: 0, 0
   index: -1

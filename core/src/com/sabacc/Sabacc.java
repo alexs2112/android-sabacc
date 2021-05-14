@@ -3,10 +3,13 @@ package com.sabacc;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.sabacc.screens.StartScreen;
 
 /**
  * Android implementation of Sabacc
@@ -35,9 +38,6 @@ public class Sabacc extends Game {
 	// Some extra settings
 	public int maxMessages;
 	public float aiTurnLength;
-	public int startingCredits;
-	public int ante;
-	public Color backgroundColour;
 	public boolean autoDisplayAndHide;	// Automatically open and close opponents at the end and start of rounds
 	public float shiftChance;
 	public float timeForDoubleTap;	// How long the player has between taps to double click a card to move it to the interference field
@@ -60,10 +60,7 @@ public class Sabacc extends Game {
 
 		// Set some extra settings
 		maxMessages = 8;
-		aiTurnLength = 0.3f;
-		startingCredits = 500;
-		ante = 20;
-		backgroundColour = new Color(0,0,0.2f,1);
+		aiTurnLength = 0.2f;
 		autoDisplayAndHide = true;
 		shiftChance = 0.05f;	// 5% chance for a sabacc shift after every player takes a turn, should happen around once, twice is not uncommon, thrice is rare
 		timeForDoubleTap = 0.5f;	// half a second
@@ -76,7 +73,12 @@ public class Sabacc extends Game {
 		Skin uiSkin = new Skin();
 		uiSkin.addRegions(new TextureAtlas(Gdx.files.internal("ui.atlas")));
 
-		this.setScreen(new GameScreen(this, 5, uiSkin));
+		// Set the camera and viewport that will be passed into the Game Screen
+		OrthographicCamera camera = new OrthographicCamera();
+		camera.setToOrtho(false, width, height);
+		FitViewport viewport = new FitViewport(width, height, camera);
+
+		this.setScreen(new StartScreen(this, uiSkin, camera, viewport));
 	}
 
 	@Override

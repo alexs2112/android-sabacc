@@ -1,6 +1,7 @@
 package com.sabacc;
 
 import com.badlogic.gdx.utils.Timer;
+import com.sabacc.screens.GameScreen;
 
 public class SabaccTimer {
     public boolean started;
@@ -30,7 +31,7 @@ public class SabaccTimer {
     }
 
     /**
-     *
+     * Add a short delay timer to check for double tapping a card to place it into the interference field
      */
     public void timeDoubleTap(final Card c, float delay) {
         task = new Timer.Task() {

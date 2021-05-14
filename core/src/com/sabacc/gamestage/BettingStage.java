@@ -10,7 +10,7 @@ import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.sabacc.Card;
-import com.sabacc.GameScreen;
+import com.sabacc.screens.GameScreen;
 import com.sabacc.Player;
 
 public class BettingStage implements GameStage {
@@ -52,9 +52,6 @@ public class BettingStage implements GameStage {
             main.noButton.draw(main.game.batch,0,0,600,main.buttonRect.height);
 
         currentStage.draw();
-
-        if (currentBid > 0)
-            main.game.font24.draw(main.game.batch, "Bid: " + currentBid, 300, main.potRect.y + 30);
     }
 
     @Override
@@ -124,7 +121,7 @@ public class BettingStage implements GameStage {
             main.addMessage(p.name() + " is all in");
         } else {
             // Otherwise, get the AI action
-            int bet = p.makeBet(main.mainPot, currentBid, main.players, main.isCalled);
+            int bet = p.makeBet(main.mainPot, currentBid, main.players, main.ante, main.isCalled);
 
             if (bet == -1) {
                 // Fold
@@ -348,7 +345,7 @@ public class BettingStage implements GameStage {
             int value = main.mainPot;
             if (winner.isAllIn)
                 value = winner.allInValue;
-            main.addMessage(winner.name() + " won " + value + " credits as everybody else folded!");
+            main.addMessage(winner.name() + " won " + value + " credits as they are the only one remaining!");
             winner.modifyCredits(value);
             main.mainPot = main.mainPot - value;
         } else {
@@ -449,7 +446,7 @@ public class BettingStage implements GameStage {
             nonfold++;
             if (p.idiotsArray())
                 handValues.get(24).add(p);
-            else
+            else if (Math.abs(p.score()) < 24)
                 handValues.get(Math.abs(p.score())).add(p);
         }
         return nonfold;
@@ -474,6 +471,7 @@ public class BettingStage implements GameStage {
         checkStage = new Stage(viewport);
 
         // Check
+        // @todo have ways to change this between Check, Match, All In, depending on scenario
         TextButton betButton = new TextButton("Check", buttonStyle);
         betButton.setWidth(200);
         betButton.setHeight(main.buttonRect.height);
@@ -497,12 +495,15 @@ public class BettingStage implements GameStage {
         raiseButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent e, float x, float y) {
-                currentStage = raiseStage;
-                // Automatically select the textfield and open the keyboard
-                TextField f = (TextField) raiseStage.getActors().get(0);
-                currentStage.setKeyboardFocus(f);
-                f.getOnscreenKeyboard().show(true);
-                main.setStageInput(currentStage);
+                Player p = main.getCurrentPlayer();
+                if (p.isHuman) {
+                    currentStage = raiseStage;
+                    // Automatically select the textfield and open the keyboard
+                    TextField f = (TextField) raiseStage.getActors().get(0);
+                    currentStage.setKeyboardFocus(f);
+                    f.getOnscreenKeyboard().show(true);
+                    main.setStageInput(currentStage);
+                }
             }
         });
 

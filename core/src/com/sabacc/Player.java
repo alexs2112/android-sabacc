@@ -2,6 +2,7 @@ package com.sabacc;
 
 import com.badlogic.gdx.utils.Array;
 import com.sabacc.gamestage.PlayerButton;
+import com.sabacc.screens.GameScreen;
 
 public class Player {
     // A player has to have a name
@@ -131,7 +132,7 @@ public class Player {
      * @param players the array of players in the game
      * @return -1 if the player folds, -2 if the player goes all in, or an integer of how much this player will bet
      */
-    public int makeBet(int mainPot, int bid, Array<Player> players, boolean isCalled) {
+    public int makeBet(int mainPot, int bid, Array<Player> players, int ante, boolean isCalled) {
         // For now, make it extremely simple
         // Folding Conditions: (-1)
         //  - If the player cannot afford to call the bid and their hand is bad
@@ -140,7 +141,7 @@ public class Player {
         //  - If the hand value is bombed out, then fold
         // All in Conditions: (-2)
         //  - If the player cannot afford to call the bid and their hand is good
-        //  - @todo If the player has less than 2x the ante credits, for now just set at 40 so would have to drop otherwise
+        //  - If the player has less than 2x the ante credits
         // Raising Conditions:
         //  - If the player has a hand > 17, raise by minbid
         //  - If the player has a pure sabacc, raise by double minbid
@@ -149,7 +150,7 @@ public class Player {
         int aScore = Math.abs(score);
 
         // If they have or will have less than 40 credits, always go all in as they will have to drop if they fold
-        if (bid - currentBid > 0 && credits - (bid - currentBid) < 40)
+        if (bid - currentBid > 0 && credits - (bid - currentBid) < ante * 2)
             return -2;
 
         // If they cannot afford to call:
@@ -195,12 +196,12 @@ public class Player {
      * @return -1 if this player calls, 0 if they stand, 1 if they draw
      */
     public int drawChoice(int untilCall) {
-        if (Math.abs(score) < 18 || (Math.abs(score) > 24 && Math.abs(score) < 40))
+        if (Math.abs(score) < 18 || (Math.abs(score) > 24 && Math.abs(score) < 28 && numCards() < 4))
             return 1;
         if (untilCall <= 0 && Math.abs(score) > 17 && Math.abs(score) < 24)
             return -1;
-        if (untilCall <= 0 && Math.random() < 0.2) // Randomly call 20% of the time if able, to prevent random loops
-            return -1;
+        //if (untilCall <= 0 && Math.random() < 0.2) // Randomly call 20% of the time if able, to prevent random loops
+        //  return -1;
         return 0;
     }
 }

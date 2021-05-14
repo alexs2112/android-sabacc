@@ -1,12 +1,11 @@
 package com.sabacc.gamestage;
 
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.viewport.FitViewport;
-import com.sabacc.GameScreen;
+import com.sabacc.screens.GameScreen;
 
 /**
  * One large button to start the next round of play

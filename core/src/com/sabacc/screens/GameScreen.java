@@ -1,4 +1,4 @@
-package com.sabacc;
+package com.sabacc.screens;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputAdapter;
@@ -18,6 +18,11 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Queue;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.sabacc.Card;
+import com.sabacc.Deck;
+import com.sabacc.Player;
+import com.sabacc.Sabacc;
+import com.sabacc.SabaccTimer;
 import com.sabacc.gamestage.*;
 
 public class GameScreen implements Screen {
@@ -27,6 +32,9 @@ public class GameScreen implements Screen {
     // An array of players in the game, with a reference to the main player
     final public Array<Player> players;
     final public Player player;
+
+    // A couple variables set at the start of the game
+    public int ante;
 
     // The index of the current player and a small helper function to increment it to
     // the next active player
@@ -117,6 +125,7 @@ public class GameScreen implements Screen {
     final public Skin uiSkin;
     final private Drawable playerbox;
     final private Drawable lock;
+    final private Drawable creditsBox;
 
     // The starting x coordinate of where to draw the player's hand, to enable horizontal scrolling
     private int startOfHand;
@@ -136,19 +145,20 @@ public class GameScreen implements Screen {
     private Rectangle currentRect;
 
 
-    public GameScreen(final Sabacc game, int numOfOpponents, Skin uiSkin) {
+    public GameScreen(final Sabacc game, Skin uiSkin, OrthographicCamera camera, FitViewport viewport,
+                      int numOfOpponents, int ante, int startingCredits) {
         // @todo clean up this ugly constructor
 
         // Set up some preliminary variables that are needed
         this.game = game;
         deck = new Deck();
-        camera = new OrthographicCamera();
-        camera.setToOrtho(false, game.width, game.height);
+        this.camera = camera;
         messages = new Queue<String>();
         timer = new SabaccTimer(this);
         this.uiSkin = uiSkin;
         noButton = uiSkin.getDrawable("button1-up");
         inputTouch = new Vector3();
+        this.ante = ante;
 
         // Initialize where each screen area exists
         // @todo make rectangles dynamic so the screen can be resized if needed
@@ -157,16 +167,17 @@ public class GameScreen implements Screen {
         selectRect = new Rectangle(0, handRect.y + handRect.height, 600, 72);
         opponentRect = new Rectangle(0, selectRect.y + selectRect.height, 600, game.height - 288 - (selectRect.y + selectRect.height));
         messageRect = new Rectangle(0, game.height - 288, 600, 160);
-        potRect = new Rectangle(0, game.height - 128, 600, 64);
-        menuRect = new Rectangle(0, game.height - 64, 600, 64);
+        potRect = new Rectangle(0, game.height - 128, 600, 48);
+        menuRect = new Rectangle(0, game.height - 80, 600, 80);
 
         // Load the viewport for the different button stages
         // Keep track of the current stage, either for the betting round or the drawing round
-        viewport = new FitViewport(game.width, game.height, camera);
+        this.viewport = viewport;
         playerbox = uiSkin.getDrawable("player-box");
         uiLine = uiSkin.getDrawable("line");
         background = uiSkin.getDrawable("background");
         lock = uiSkin.getDrawable("lock");
+        creditsBox = uiSkin.getDrawable("credits");
 
         // Default small card size (for opponents) is 70x96 px
         smallCardWidth = 70;
@@ -175,11 +186,11 @@ public class GameScreen implements Screen {
 
         // Set up all players
         players = new Array<Player>();
-        player = new Player(true, "Alex", game.startingCredits);
+        player = new Player(true, "Urist", startingCredits);
         players.add(player);
         Player p;
         for (int i = 0; i < numOfOpponents; i++) {
-            p = new Player(false, "Opponent " + i, game.startingCredits);
+            p = new Player(false, "Opponent " + i, startingCredits);
             p.setBidRange(0.2f, 0.6f);
             players.add(p);
         }
@@ -225,7 +236,7 @@ public class GameScreen implements Screen {
     @Override
     public void render(float delta) {
         // Clear the screen to the background colour
-        ScreenUtils.clear(game.backgroundColour);
+        ScreenUtils.clear(0, 0, 0.2f, 1);
 
         // Update the camera
         camera.update();
@@ -240,9 +251,9 @@ public class GameScreen implements Screen {
         // Draw the players hand
         displayHand();
 
-        // For now just draw a big background box from messages to the top of the screen, to block
+        // For now just draw a big background box from messages to the top of the pots, to block
         // off opponents going under messages and looking ugly
-        background.draw(game.batch, 0, messageRect.y, 600, messageRect.height + potRect.height + menuRect.height);
+        background.draw(game.batch, 0, messageRect.y, 600, messageRect.height + potRect.height);
 
         // Write all game messages at the top of the screen
         uiLine.draw(game.batch, 0, messageRect.y, 600, 4);
@@ -250,12 +261,13 @@ public class GameScreen implements Screen {
             game.msgFont.draw(game.batch, messages.get(i), 16, messageRect.y + i*20 + 26);
 
         // For now, just write the pot values at the top of the screen
-        uiLine.draw(game.batch, 0, menuRect.y, 600, 4);
-        game.font24.draw(game.batch, "Main Pot: " + mainPot, 16, potRect.y + 54);
-        game.font24.draw(game.batch, "Sabacc Pot: " + sabaccPot, 272, potRect.y + 54);
+        uiLine.draw(game.batch, 0, menuRect.y - 4, 600, 4);
+        game.font24.draw(game.batch, "Main Pot: " + mainPot, 16, potRect.y + 34);
+        game.font24.draw(game.batch, "Sabacc Pot: " + sabaccPot, 272, potRect.y + 34);
 
-        // Write how many credits the player currently has
-        game.font24.draw(game.batch, "Credits: " + player.credits(), 16, potRect.y + 30);
+        // Write how many credits the player currently has next to the menu button
+        creditsBox.draw(game.batch, 0, menuRect.y, 400, menuRect.height);
+        game.font24.draw(game.batch, "Credits: " + player.credits(), 80, menuRect.y + 48);
 
         // Show the current stage on top of everything when it is the players turn
         // @todo this is a bit lazy to check the current stage here
@@ -362,7 +374,7 @@ public class GameScreen implements Screen {
         // Start by refreshing the deck and clearing each players hand
         messages.clear();
         addMessage("Starting new round!");
-        addMessage("Ante is " + game.ante);
+        addMessage("Ante is " + ante);
         hidePlayerHands();
         deck.refreshDeck();
         for (Player p : players) {
@@ -375,26 +387,37 @@ public class GameScreen implements Screen {
 
         // Trying to fix a crash that happens when a bunch of players bomb out
         for (int i = 0; i < players.size; i++) {
-            if (players.get(i).credits() >= game.ante * 2)
+            if (players.get(i).credits() >= ante * 2)
                 continue;
             addMessage(players.get(i).name() + " drops from the game!");
 
             // Remove the player and its associated button
-            // @todo not sure if removing the button works properly
             players.removeIndex(i);
+            if (playerButtons.get(i) != null)
+                playerButtons.get(i).setVisible(false);
             playerButtons.removeIndex(i);
             updateButtonPositions();
             i--;
         }
 
+        // @todo have the button change to End Game, rather than Start Next Round when the game is over
+        if (players.size == 1) {
+            game.setScreen(new GameOverScreen(game, uiSkin, camera, viewport, players.get(0)));
+            return;
+        }
+        if (players.size == 0) {
+            game.setScreen(new GameOverScreen(game, uiSkin, camera, viewport, null));
+            return;
+        }
+
         // For now, automatically ante each player
         for (Player p : players) {
             p.folded = false;
-            p.modifyCredits(-(game.ante*2));
+            p.modifyCredits(-(ante*2));
             p.updateButton();
         }
-        mainPot += game.ante * players.size;
-        sabaccPot += game.ante * players.size;
+        mainPot += ante * players.size;
+        sabaccPot += ante * players.size;
 
         // Notify the game that this is a new round, to deal a hand after the first betting round
         startOfRound = true;
@@ -568,8 +591,9 @@ public class GameScreen implements Screen {
             }
         };
 
-        // Sets up each player button
         baseStage = new Stage(viewport);
+
+        // Sets up each player button
         playerButtons = new Array<PlayerButton>();
         TextButton.TextButtonStyle style = new TextButton.TextButtonStyle();
         style.font = game.font24;
@@ -596,14 +620,39 @@ public class GameScreen implements Screen {
                     else {
                         updateMaxScrollOpponents();
                         startScrollOpponents = Math.max(0, Math.min(startScrollOpponents, maxScrollOpponents));
-                        updateButtonPositions();    // After toggling, update positions of each button
+                        //updateButtonPositions();    // After toggling, update positions of each button
                     }
+                }
+
+                @Override
+                public void touchUp(InputEvent event, float x, float y, int pointer, int button) {
+                    super.touchUp(event, x, y, pointer, button);
+                    updateButtonPositions();
                 }
             });
             p.button = button;
             playerButtons.add(button);
             baseStage.addActor(button);
         }
+
+        // Set up the top settings button
+        style = new TextButton.TextButtonStyle();
+        style.font = game.font24;
+        style.up = uiSkin.getDrawable("settings-button-up");
+        style.down = uiSkin.getDrawable("settings-button-down");
+        TextButton settingsButton = new TextButton("Settings", style);
+        settingsButton.setWidth(200);
+        settingsButton.setHeight(menuRect.height);
+        settingsButton.setPosition(400,menuRect.y);
+        settingsButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent e, float x, float y) {
+                // Pause any timers
+                // @todo Open settings gamestage
+            }
+        });
+        baseStage.addActor(settingsButton);
+
         updateButtonPositions();
         input.addProcessor(baseInput);
         input.addProcessor(baseStage);

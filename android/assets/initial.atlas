@@ -1,0 +1,41 @@
+
+initial.png
+size: 1024, 128
+format: RGBA8888
+filter: Nearest, Nearest
+repeat: none
+minus-one-down
+  rotate: false
+  xy: 404, 18
+  size: 96, 96
+  orig: 96, 96
+  offset: 0, 0
+  index: -1
+minus-one-up
+  rotate: false
+  xy: 600, 18
+  size: 96, 96
+  orig: 96, 96
+  offset: 0, 0
+  index: -1
+plus-one-down
+  rotate: false
+  xy: 502, 18
+  size: 96, 96
+  orig: 96, 96
+  offset: 0, 0
+  index: -1
+plus-one-up
+  rotate: false
+  xy: 698, 18
+  size: 96, 96
+  orig: 96, 96
+  offset: 0, 0
+  index: -1
+textbox
+  rotate: false
+  xy: 2, 2
+  size: 400, 112
+  orig: 400, 112
+  offset: 0, 0
+  index: -1

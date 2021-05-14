@@ -56,11 +56,13 @@ At any point after a player draws or bets, a Sabacc shift may happen. This rando
 
 **Known Bugs**
 
-The font I am currently using (AnakinMono) does not have a negative sign, so your hand value might look a little strange. Working on fixing that as it is annoying, but does not affect gameplay.
+ - The font I am currently using (AnakinMono) does not have a negative sign, so your hand value might look a little strange. Working on fixing that as it is annoying, but does not affect gameplay.
 
-Things get a little weird sometimes once the player drops from the game. There may be the occasional bug where the game just sits there or crashes when all players have folded and at least one player has already dropped. Not sure if it was fixed or not by another update
+ - Things get a little weird sometimes once the player drops from the game. There may be the occasional bug where the game just sits there or crashes when all players have folded and at least one player has already dropped. Not sure if it was fixed or not by another update
 
-As of now, Sudden Demise only happens exactly once per "hand value". So if a Sudden Demise happens and there are multiple players with the same score, the first one will get the win. This seems exceedingly unlikely in practice.
+ - As of now, Sudden Demise only happens exactly once per "hand value". So if a Sudden Demise happens and there are multiple players with the same score, the first one will get the win. This seems exceedingly unlikely in practice.
+
+ - If the screen is resized, things get weird
 
 **Current Roadmap**
 

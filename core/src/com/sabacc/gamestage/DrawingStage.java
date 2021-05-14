@@ -1,12 +1,11 @@
 package com.sabacc.gamestage;
 
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.viewport.FitViewport;
-import com.sabacc.GameScreen;
+import com.sabacc.screens.GameScreen;
 import com.sabacc.Player;
 
 /**
@@ -189,6 +188,7 @@ public class DrawingStage implements GameStage {
         callStage = new Stage(viewport);
 
         // Need a lot of repeated code as libgdx doesnt like adding a button to multiple stages
+        // @todo add ways to change between red Call and regular Call rather than having multiple stages
 
         // Draw Button
         TextButton drawButton = new TextButton("Draw", buttonStyle);
