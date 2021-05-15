@@ -531,8 +531,10 @@ public class GameScreen implements Screen {
                             selected = player.hand().get(i);
                             if (selected == doubleTap) {
                                 // If the player double taps a card, field it
-                                fieldCard(player, doubleTap);
-                                doubleTap = null;
+                                if (!player.folded) {
+                                    fieldCard(player, doubleTap);
+                                    doubleTap = null;
+                                }
                             } else {
                                 // Otherwise, start a new timer to see if they double tap another card
                                 doubleTap = selected;

@@ -541,12 +541,12 @@ public class BettingStage implements GameStage {
 
         TextField.TextFieldStyle style = new TextField.TextFieldStyle();
         style.font = main.game.font32;
-        style.background = main.uiSkin.getDrawable("button1-up");
+        style.background = main.uiSkin.getDrawable("text-input");
         style.fontColor = Color.WHITE;
         final TextField field = new TextField("", style);
-        field.setPosition(0, y);
+        field.setPosition(50, y);
         field.setAlignment(Align.center);
-        field.setSize(600,96);
+        field.setSize(500,96);
         field.setTextFieldFilter(new TextField.TextFieldFilter.DigitsOnlyFilter());
         field.setTextFieldListener(new TextField.TextFieldListener() {
             @Override
@@ -563,7 +563,7 @@ public class BettingStage implements GameStage {
         TextButton acceptButton = new TextButton("Accept", buttonStyle);
         acceptButton.setWidth(200);
         acceptButton.setHeight(96);
-        acceptButton.setPosition(0,y);
+        acceptButton.setPosition(100,y);
         acceptButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent e, float x, float y) {
@@ -576,7 +576,7 @@ public class BettingStage implements GameStage {
         TextButton cancelButton = new TextButton("Cancel", buttonStyle);
         cancelButton.setWidth(200);
         cancelButton.setHeight(96);
-        cancelButton.setPosition(400,y);
+        cancelButton.setPosition(300,y);
         cancelButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent e, float x, float y) {

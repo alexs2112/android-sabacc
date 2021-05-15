@@ -1,0 +1,18 @@
+Each AI will be able to calculate two things that will affect drawing and betting.
+
+Pressure: Once pressure crosses a certain threshold, choose to draw a card.
+ - Increases over time, dramatic increase after the pot building phase as an opponent can call the game on their turns.
+ - Decreases based on number of cards in hand, want the average hand to be around 3 or 4 so that they don't get totally blown out by a Sabacc Shift.
+ - Pressure has to cross a threshold based on the current confidence. If the player is very confident in their hand they should not be drawing cards as they could randomly be blown out super hard.
+
+Confidence: How confident they are in their hand, affects betting and calling
+ - Increases for each round that opponents do not bet
+ - Multiplied against the current hand value to determine betting and calling
+ - Increases for each opponent that folds, or rather decreases based on how many other players are still in the hand. An 18 is quite good against one player by the fourth round, but unlikely to win anything against the maximum of 7 opponents.
+ - Decreases based on opponent betting. Factor their bet by their current credits to get a rough estimate of their confidence, and then compare confidences to determine whether to fold, match, or raise.
+ - Once the player decides to bet, perhaps by their confidence crossing some threshold multiplied by hand value, their bet will be their current credits multiplied by some decimal value based on their confidence.
+
+Other things that affect betting:
+ - How many credits other players have, the AI should (obviously) never raise past the maximum credits of the "richest" opponent still in the hand
+ - Confidence and Pressure could be multiplied by some other floating point value based on given AI. An Aggressive AI would build confidence and pressure faster, while a Cautious AI would build both slower. This would lead to the Aggressive AI betting, drawing, and calling more often while the Cautious AI would be more likely to fold and stand.
+    - Probably use a Type enum to store those values, it really only needs to store two floats.

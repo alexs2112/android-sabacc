@@ -137,7 +137,6 @@ public class Player {
         // Folding Conditions: (-1)
         //  - If the player cannot afford to call the bid and their hand is bad
         //  - If the current bid is greater than this players max bid and they do not have a pure sabacc
-        //  - If this player has all 5 cards in hand but a hand value less than 14
         //  - If the hand value is bombed out, then fold
         // All in Conditions: (-2)
         //  - If the player cannot afford to call the bid and their hand is good
@@ -196,12 +195,12 @@ public class Player {
      * @return -1 if this player calls, 0 if they stand, 1 if they draw
      */
     public int drawChoice(int untilCall) {
-        if (Math.abs(score) < 18 || (Math.abs(score) > 24 && Math.abs(score) < 28 && numCards() < 4))
+        if (Math.abs(score) < 18 || (Math.abs(score) > 24 && Math.abs(score) < 30 && numCards() < 4))
             return 1;
         if (untilCall <= 0 && Math.abs(score) > 17 && Math.abs(score) < 24)
             return -1;
         //if (untilCall <= 0 && Math.random() < 0.2) // Randomly call 20% of the time if able, to prevent random loops
-        //  return -1;
+        //  return -1;                               // We don't really need this as eventually Sabacc Shifts will force players into good hands to call
         return 0;
     }
 }
